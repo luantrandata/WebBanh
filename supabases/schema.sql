@@ -222,3 +222,20 @@ insert into pages (slug, title, blocks, published, show_in_footer, sort_order) v
   true, true, 3
 )
 on conflict (slug) do nothing;
+
+-- =========================================================================
+-- STORAGE — bucket lưu ảnh tải lên (sản phẩm, logo, trang tuỳ chỉnh)
+-- Nếu bạn đã chạy schema trước đó rồi, chỉ cần chạy riêng đoạn này thêm 1 lần.
+-- =========================================================================
+insert into storage.buckets (id, name, public)
+values ('images', 'images', true)
+on conflict (id) do nothing;
+
+-- Ai cũng xem được ảnh (bucket public), nhưng CHỈ admin đã đăng nhập mới được tải lên/xoá
+create policy "admin upload images" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'images');
+
+create policy "admin delete images" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'images');
