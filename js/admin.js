@@ -184,9 +184,9 @@ function productFormModal(){
           </div>
           <div class="field">
             <label>Ảnh sản phẩm</label>
-            <input name="image" id="pf-image" value="${esc(p.image||'')}" placeholder="Dán URL ảnh, hoặc chọn biểu tượng bên dưới">
+            ${imageUploadRow('pf-image','image',p.image)}
             <div class="thumb-picker" style="margin-top:10px;">
-              ${EMOJI_CHOICES.map(em=>`<button type="button" class="emoji-opt ${p.image===em?'checked':''}" onclick="document.getElementById('pf-image').value='${em}'; document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('checked')); this.classList.add('checked');">${em}</button>`).join('')}
+              ${EMOJI_CHOICES.map(em=>`<button type="button" class="emoji-opt ${p.image===em?'checked':''}" onclick="document.getElementById('pf-image').value='${em}'; document.getElementById('pf-image-preview-wrap').innerHTML=''; document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('checked')); this.classList.add('checked');">${em}</button>`).join('')}
             </div>
           </div>
           <div class="field"><label>Mô tả</label><textarea name="description" placeholder="Mô tả ngắn về sản phẩm...">${esc(p.description||'')}</textarea></div>
@@ -333,7 +333,10 @@ function pageAdminSettings(){
         <h3 style="margin:0 0 16px; font-size:16px;">Thương hiệu</h3>
         <div class="field-row">
           <div class="field"><label>Tên thương hiệu</label><input name="brandName" value="${esc(s.brandName)}" placeholder="Tên tiệm bánh của bạn"></div>
-          <div class="field"><label>Ảnh logo (URL — để trống nếu dùng biểu tượng)</label><input name="logoImage" value="${esc(s.logoImage)}" placeholder="https://..."></div>
+          <div class="field">
+            <label>Ảnh logo (để trống nếu dùng biểu tượng)</label>
+            ${imageUploadRow('set-logoImage','logoImage',s.logoImage)}
+          </div>
         </div>
         <div class="field">
           <label>Biểu tượng logo (dùng khi không có ảnh)</label>

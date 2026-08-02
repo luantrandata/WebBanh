@@ -85,3 +85,43 @@ function svgTrash(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fil
 function svgChat(){ return `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`; }
 function svgUp(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`; }
 function svgDown(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`; }
+function svgUpload(){ return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`; }
+
+/* ---------- Ô ảnh dùng chung: dán URL hoặc tải ảnh lên Supabase Storage ---------- */
+function imageUploadRow(id, name, value){
+  return `
+  <div class="image-upload-row">
+    <input type="text" id="${id}" name="${name||''}" value="${esc(value||'')}" placeholder="Dán URL ảnh hoặc bấm Tải ảnh lên">
+    <label class="btn btn-ghost btn-sm upload-btn" id="${id}-btn">
+      ${svgUpload()} Tải ảnh lên
+      <input type="file" accept="image/*" style="display:none" onchange="handleImageUpload(event,'${id}')">
+    </label>
+  </div>
+  <div class="image-preview-wrap" id="${id}-preview-wrap">
+    ${value && value.startsWith('http') ? `<img src="${esc(value)}" class="image-preview">` : ''}
+  </div>`;
+}
+async function handleImageUpload(e, targetId){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('Vui lòng chọn một file ảnh'); return; }
+  if(file.size > 5*1024*1024){ toast('Ảnh tối đa 5MB'); return; }
+  const btn = document.getElementById(targetId+'-btn');
+  if(btn) btn.classList.add('uploading');
+  toast('Đang tải ảnh lên...');
+  try{
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'') || 'jpg';
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error } = await sb.storage.from('images').upload(path, file, { cacheControl:'3600', upsert:false });
+    if(error) throw error;
+    const { data } = sb.storage.from('images').getPublicUrl(path);
+    const input = document.getElementById(targetId);
+    if(input) input.value = data.publicUrl;
+    const wrap = document.getElementById(targetId+'-preview-wrap');
+    if(wrap) wrap.innerHTML = `<img src="${data.publicUrl}" class="image-preview">`;
+    toast('Đã tải ảnh lên thành công');
+  }catch(err){
+    toast('Lỗi tải ảnh: ' + err.message);
+  }
+  if(btn) btn.classList.remove('uploading');
+}

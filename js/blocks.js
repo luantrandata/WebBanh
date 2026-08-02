@@ -189,7 +189,7 @@ function blockEditorCard(b, i){
       <div class="field"><label>Nội dung</label><textarea id="blk-${i}-text" rows="4">${esc(b.text)}</textarea></div>`;
   } else if(b.type === 'image_text'){
     fields = `
-      <div class="field"><label>URL ảnh</label><input id="blk-${i}-image" value="${esc(b.image)}" placeholder="https://..."></div>
+      <div class="field"><label>Ảnh</label>${imageUploadRow(`blk-${i}-image`,'',b.image)}</div>
       <div class="field"><label>Tiêu đề</label><input id="blk-${i}-heading" value="${esc(b.heading)}"></div>
       <div class="field"><label>Nội dung</label><textarea id="blk-${i}-text" rows="3">${esc(b.text)}</textarea></div>
       <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;">
