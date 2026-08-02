@@ -79,10 +79,115 @@ function zaloTarget(){
   if(/^[0-9+]+$/.test(v)) return `https://zalo.me/${v.replace(/\D/g,'')}`;
   return `https://zalo.me/${v}`;
 }
-function zaloFab(){
-  const link = zaloTarget();
-  if(!link) return '';
-  return `<a class="zalo-fab" href="${esc(link)}" target="_blank" rel="noopener"><span class="ic">${svgChat()}</span><span class="label">Chat Zalo</span></a>`;
+function messengerTarget(){
+  const v = (SETTINGS.messengerLink||'').trim();
+  if(!v) return '';
+  if(v.startsWith('http')) return v;
+  return `https://m.me/${v.replace(/^@/,'')}`;
+}
+function fabCluster(){
+  const zalo = zaloTarget();
+  const messenger = messengerTarget();
+  let html = '<div class="fab-stack">';
+  html += chatToggleButton();
+  if(messenger) html += `<a class="chat-fab chat-fab-messenger" href="${esc(messenger)}" target="_blank" rel="noopener"><span class="ic">${svgChat()}</span><span class="label">Chat Messenger</span></a>`;
+  if(zalo) html += `<a class="chat-fab chat-fab-zalo" href="${esc(zalo)}" target="_blank" rel="noopener"><span class="ic">${svgChat()}</span><span class="label">Chat Zalo</span></a>`;
+  html += '</div>';
+  return html;
+}
+
+/* ---------- Chat trực tiếp trên web ---------- */
+let chatUI = { open:false };
+function chatToggleButton(){
+  return `<button type="button" class="chat-fab chat-fab-live" onclick="toggleChatWidget()"><span class="ic">${svgChat()}</span><span class="label">${chatUI.open?'Đóng chat':'Chat với chúng tôi'}</span></button>`;
+}
+function chatPanel(){
+  if(!chatUI.open) return '';
+  if(!CHAT_SESSION){
+    return `
+    <div class="chat-panel">
+      <div class="chat-panel-head"><span>💬 Chat với ${esc(SETTINGS.brandName)}</span><button type="button" class="close-x" onclick="toggleChatWidget()">×</button></div>
+      <div class="chat-panel-body">
+        <p style="font-size:13.5px; color:var(--cocoa-70); margin-bottom:14px;">Để lại tên và số điện thoại để bắt đầu trò chuyện — chúng tôi sẽ phản hồi sớm nhất có thể.</p>
+        <form onsubmit="return submitStartChat(event);">
+          <div class="field"><input required name="name" placeholder="Tên của bạn"></div>
+          <div class="field"><input required name="phone" placeholder="Số điện thoại"></div>
+          <button class="btn btn-cherry btn-block" type="submit">Bắt đầu trò chuyện</button>
+        </form>
+      </div>
+    </div>`;
+  }
+  return `
+  <div class="chat-panel">
+    <div class="chat-panel-head"><span>💬 ${esc(SETTINGS.brandName)}</span><button type="button" class="close-x" onclick="toggleChatWidget()">×</button></div>
+    <div class="chat-panel-messages" id="chat-messages-list">
+      ${CHAT_MESSAGES.map(chatBubble).join('') || `<div style="text-align:center; color:var(--cocoa-70); font-size:13px; padding:20px 0;">Gửi tin nhắn đầu tiên cho chúng tôi nhé!</div>`}
+    </div>
+    <form class="chat-panel-input" onsubmit="return submitChatMessage(event);">
+      <input name="message" placeholder="Nhập tin nhắn..." autocomplete="off">
+      <button type="submit">${svgSend()}</button>
+    </form>
+  </div>`;
+}
+function chatBubble(m){
+  const mine = m.sender === 'customer';
+  return `<div class="chat-bubble ${mine?'mine':'theirs'}">${esc(m.message)}</div>`;
+}
+async function toggleChatWidget(){
+  chatUI.open = !chatUI.open;
+  if(chatUI.open && CHAT_SESSION){
+    await refreshChatMessages();
+    startChatPolling();
+  } else {
+    stopChatPolling();
+  }
+  render();
+  if(chatUI.open) scrollChatToBottom();
+}
+async function submitStartChat(e){
+  e.preventDefault();
+  const f = e.target;
+  const btn = f.querySelector('button[type=submit]');
+  if(btn) btn.disabled = true;
+  await startChatConversation(f.name.value.trim(), f.phone.value.trim());
+  await refreshChatMessages();
+  startChatPolling();
+  render();
+  scrollChatToBottom();
+  return false;
+}
+async function submitChatMessage(e){
+  e.preventDefault();
+  const f = e.target;
+  const msg = f.message.value;
+  if(!msg.trim()) return false;
+  f.message.value = '';
+  CHAT_MESSAGES.push({ sender:'customer', message:msg, created_at:new Date().toISOString() });
+  render();
+  scrollChatToBottom();
+  await sendChatMessage(CHAT_SESSION.id, 'customer', msg);
+  await refreshChatMessages();
+  render();
+  scrollChatToBottom();
+  return false;
+}
+async function refreshChatMessages(){
+  if(!CHAT_SESSION) return;
+  CHAT_MESSAGES = await fetchMyChatMessages();
+}
+let chatPollTimer = null;
+function startChatPolling(){
+  stopChatPolling();
+  chatPollTimer = setInterval(async ()=>{
+    if(!chatUI.open || !CHAT_SESSION) return;
+    const prevCount = CHAT_MESSAGES.length;
+    await refreshChatMessages();
+    if(CHAT_MESSAGES.length !== prevCount){ render(); scrollChatToBottom(); }
+  }, 4000);
+}
+function stopChatPolling(){ if(chatPollTimer){ clearInterval(chatPollTimer); chatPollTimer = null; } }
+function scrollChatToBottom(){
+  setTimeout(()=>{ const el = document.getElementById('chat-messages-list'); if(el) el.scrollTop = el.scrollHeight; }, 50);
 }
 
 /* ---------- Thẻ sản phẩm ---------- */

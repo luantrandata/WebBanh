@@ -86,6 +86,15 @@ function svgChat(){ return `<svg width="18" height="18" viewBox="0 0 24 24" fill
 function svgUp(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`; }
 function svgDown(){ return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`; }
 function svgUpload(){ return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`; }
+function svgSend(){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`; }
+function timeAgo(iso){
+  if(!iso) return '';
+  const diff = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if(diff < 60) return 'Vừa xong';
+  if(diff < 3600) return Math.floor(diff/60) + ' phút trước';
+  if(diff < 86400) return Math.floor(diff/3600) + ' giờ trước';
+  return Math.floor(diff/86400) + ' ngày trước';
+}
 
 /* ---------- Ô ảnh dùng chung: dán URL hoặc tải ảnh lên Supabase Storage ---------- */
 function imageUploadRow(id, name, value){

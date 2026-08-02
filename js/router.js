@@ -25,6 +25,7 @@ async function render(){
       const sub = parts[1] || 'dashboard';
       if(sub === 'products'){ html = pageAdminProducts(); }
       else if(sub === 'orders'){ html = pageAdminOrders(); }
+      else if(sub === 'chat'){ html = pageAdminChat(); }
       else if(sub === 'pages'){ html = pageAdminPages(); }
       else if(sub === 'settings'){ html = pageAdminSettings(); }
       else { html = pageAdminDashboard(); }
@@ -45,9 +46,9 @@ async function render(){
     html = pageHome();
   }
 
-  const fab = parts[0] !== 'admin' ? zaloFab() : '';
+  const extras = parts[0] !== 'admin' ? (fabCluster() + chatPanel()) : '';
   const app = document.getElementById('app');
-  if(app) app.innerHTML = html + cartDrawer() + fab;
+  if(app) app.innerHTML = html + cartDrawer() + extras;
   window.scrollTo({ top:0, behavior:'instant' });
 }
 
@@ -61,6 +62,13 @@ async function handleRoute(){
       showLoading();
       if(sub === 'orders' || sub === 'dashboard'){ await loadOrders(); }
       if(sub === 'pages'){ await loadPagesAll(true); }
+      if(sub === 'chat'){
+        ADMIN_CONVERSATIONS = await fetchAdminConversations();
+        if(ADMIN_ACTIVE_CONVO){ ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(ADMIN_ACTIVE_CONVO); }
+        startAdminChatPolling();
+      } else {
+        stopAdminChatPolling();
+      }
     }
   } else if(parts[0] === 'order-success'){
     showLoading();
@@ -81,12 +89,28 @@ async function handleRoute(){
 
 window.addEventListener('hashchange', handleRoute);
 
+/* ---------- Polling cho hội thoại chat bên quản trị ---------- */
+let adminChatPollTimer = null;
+function stopAdminChatPolling(){ if(adminChatPollTimer){ clearInterval(adminChatPollTimer); adminChatPollTimer = null; } }
+function startAdminChatPolling(){
+  stopAdminChatPolling();
+  adminChatPollTimer = setInterval(async ()=>{
+    if(!isAdmin){ stopAdminChatPolling(); return; }
+    const parts = parseRoute();
+    if(parts[0] !== 'admin' || (parts[1]||'dashboard') !== 'chat'){ stopAdminChatPolling(); return; }
+    ADMIN_CONVERSATIONS = await fetchAdminConversations();
+    if(ADMIN_ACTIVE_CONVO){ ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(ADMIN_ACTIVE_CONVO); }
+    render();
+  }, 4000);
+}
+
 /* =========================================================================
    KHỞI ĐỘNG ỨNG DỤNG
    ========================================================================= */
 async function bootstrap(){
   showLoading();
   loadCart();
+  loadChatSession();
   await initAuth();
   await loadPublicData();
   await handleRoute();

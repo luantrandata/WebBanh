@@ -33,17 +33,20 @@ async function submitAdminLogin(e){
   }
   await loadOrders();
   await loadPagesAll(true);
+  ADMIN_CONVERSATIONS = await fetchAdminConversations();
   go('#/admin/dashboard');
   return false;
 }
-async function adminLogout(){ await adminSignOut(); go('#/'); }
+async function adminLogout(){ stopAdminChatPolling(); await adminSignOut(); go('#/'); }
 
 /* ---------- Khung quản trị ---------- */
 function adminShell(active, content){
+  const unread = ADMIN_CONVERSATIONS.filter(c=>c.unread_admin).length;
   const nav = [
     { id:'dashboard', label:'Tổng quan', icon:'📊' },
     { id:'products', label:'Sản phẩm', icon:'🍰' },
     { id:'orders', label:'Đơn hàng', icon:'📦' },
+    { id:'chat', label:'Trò chuyện', icon:'💬', badge: unread>0 ? unread : null },
     { id:'pages', label:'Trang & Nội dung', icon:'📝' },
     { id:'settings', label:'Cài đặt Website', icon:'⚙️' },
   ];
@@ -51,7 +54,7 @@ function adminShell(active, content){
   <div class="admin-shell">
     <aside class="admin-side ${ui.adminMobileNav?'open':''}">
       <div class="brand">${SETTINGS.logoImage ? `<img src="${esc(SETTINGS.logoImage)}" alt="" style="width:26px;height:26px;object-fit:cover;border-radius:50%;">` : SETTINGS.logoEmoji} ${esc(SETTINGS.brandName)}</div>
-      <nav class="admin-nav">${nav.map(n=>`<a href="#/admin/${n.id}" class="${active===n.id?'active':''}">${n.icon} ${n.label}</a>`).join('')}</nav>
+      <nav class="admin-nav">${nav.map(n=>`<a href="#/admin/${n.id}" class="${active===n.id?'active':''}">${n.icon} ${n.label} ${n.badge?`<span class="nav-badge">${n.badge}</span>`:''}</a>`).join('')}</nav>
       <div style="margin-top:30px; border-top:1px solid rgba(250,243,231,.15); padding-top:16px;">
         <a href="#/" style="color:rgba(250,243,231,.6);">← Xem website</a>
         <a onclick="adminLogout()" style="color:rgba(250,243,231,.6); cursor:pointer;">Đăng xuất</a>
@@ -363,11 +366,12 @@ function pageAdminSettings(){
           <div class="field"><label>Email</label><input name="email" value="${esc(s.email)}"></div>
         </div>
         <div class="field"><label>Địa chỉ cửa hàng</label><input name="address" value="${esc(s.address)}"></div>
+        <div class="field"><label>Link Facebook (tuỳ chọn, hiển thị ở chân trang)</label><input name="facebookLink" value="${esc(s.facebookLink)}" placeholder="https://facebook.com/..."></div>
         <div class="field-row">
-          <div class="field"><label>Link Facebook (tuỳ chọn)</label><input name="facebookLink" value="${esc(s.facebookLink)}" placeholder="https://facebook.com/..."></div>
           <div class="field"><label>Zalo (số điện thoại hoặc link zalo.me/...)</label><input name="zaloLink" value="${esc(s.zaloLink)}" placeholder="09xxxxxxxx hoặc zalo.me/xxxxxxxx"></div>
+          <div class="field"><label>Facebook Messenger (tên trang hoặc link m.me/...)</label><input name="messengerLink" value="${esc(s.messengerLink||'')}" placeholder="tenpage hoặc m.me/tenpage"></div>
         </div>
-        <div class="badge-note" style="margin-bottom:0;">Khi có Zalo, nút "Chat Zalo" sẽ tự động hiện ở góc phải màn hình cho khách hàng.</div>
+        <div class="badge-note" style="margin-bottom:0;">Khi có Zalo và/hoặc Messenger, nút chat tương ứng sẽ tự động hiện ở góc phải màn hình cho khách hàng — cùng với nút "Chat trực tiếp trên web" (luôn có sẵn, không cần cấu hình).</div>
       </div>
 
       <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
@@ -411,6 +415,7 @@ async function submitSettingsForm(e){
     address: f.address.value.trim(),
     facebookLink: f.facebookLink.value.trim(),
     zaloLink: f.zaloLink.value.trim(),
+    messengerLink: f.messengerLink.value.trim(),
     bankBin: f.bankBin.value,
     bankAccountNumber: f.bankAccountNumber.value.trim(),
     bankAccountName: f.bankAccountName.value.trim().toUpperCase(),
@@ -418,4 +423,62 @@ async function submitSettingsForm(e){
   await saveSettings();
   render();
   return false;
+}
+
+/* ---------- Trò chuyện trực tiếp ---------- */
+function pageAdminChat(){
+  const list = ADMIN_CONVERSATIONS;
+  const active = ADMIN_ACTIVE_CONVO;
+  return adminShell('chat', `
+    <div class="admin-topline"><h2>Trò chuyện trực tiếp</h2></div>
+    <div class="chat-admin-layout">
+      <div class="panel chat-convo-list">
+        ${list.map(c=>`
+          <button type="button" class="chat-convo-item ${active===c.id?'active':''}" onclick="openAdminConversation('${c.id}')">
+            <div class="ci-top"><span class="ci-name">${esc(c.customer_name||'Khách')}</span>${c.unread_admin?'<span class="ci-dot"></span>':''}</div>
+            <div class="ci-phone">${esc(c.phone||'')}</div>
+            <div class="ci-time">${timeAgo(c.last_message_at)}</div>
+          </button>`).join('') || `<div class="empty-state" style="padding:40px 16px;"><div class="ico">💬</div>Chưa có cuộc trò chuyện nào</div>`}
+      </div>
+      <div class="panel chat-thread">
+        ${active ? `
+          <div class="chat-panel-messages" id="admin-chat-messages">
+            ${ADMIN_CHAT_MESSAGES.map(chatBubbleAdmin).join('') || `<div style="text-align:center;color:var(--cocoa-70);font-size:13px;padding:20px 0;">Chưa có tin nhắn</div>`}
+          </div>
+          <form class="chat-panel-input" onsubmit="return submitAdminChatMessage(event);">
+            <input name="message" placeholder="Nhập tin nhắn trả lời..." autocomplete="off">
+            <button type="submit">${svgSend()}</button>
+          </form>
+        ` : `<div class="empty-state" style="padding:60px 16px;"><div class="ico">👈</div>Chọn một cuộc trò chuyện để xem</div>`}
+      </div>
+    </div>
+  `);
+}
+function chatBubbleAdmin(m){
+  const mine = m.sender === 'admin';
+  return `<div class="chat-bubble ${mine?'mine':'theirs'}">${esc(m.message)}</div>`;
+}
+async function openAdminConversation(id){
+  ADMIN_ACTIVE_CONVO = id;
+  ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(id);
+  await markConversationRead(id);
+  const c = ADMIN_CONVERSATIONS.find(c=>c.id===id);
+  if(c) c.unread_admin = false;
+  render();
+  scrollAdminChatToBottom();
+}
+async function submitAdminChatMessage(e){
+  e.preventDefault();
+  const f = e.target;
+  const msg = f.message.value;
+  if(!msg.trim() || !ADMIN_ACTIVE_CONVO) return false;
+  f.message.value = '';
+  await sendChatMessage(ADMIN_ACTIVE_CONVO, 'admin', msg);
+  ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(ADMIN_ACTIVE_CONVO);
+  render();
+  scrollAdminChatToBottom();
+  return false;
+}
+function scrollAdminChatToBottom(){
+  setTimeout(()=>{ const el = document.getElementById('admin-chat-messages'); if(el) el.scrollTop = el.scrollHeight; }, 50);
 }

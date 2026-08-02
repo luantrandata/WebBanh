@@ -27,6 +27,7 @@ function defaultSettings(){
     email: "info@tenthuonghieu.vn",
     address: "",
     zaloLink: "",
+    messengerLink: "",
     facebookLink: "",
     bankBin: "",
     bankName: "",
@@ -310,4 +311,56 @@ async function deletePage(id){
   await loadPagesAll(true);
   render();
   toast("Đã xóa trang");
+}
+
+/* =========================================================================
+   CHAT TRỰC TIẾP TRÊN WEB
+   ========================================================================= */
+let CHAT_SESSION = null;      // {id, name, phone} — lưu trên máy khách
+let CHAT_MESSAGES = [];       // tin nhắn của cuộc hội thoại đang mở (khách)
+let ADMIN_CONVERSATIONS = []; // danh sách hội thoại (admin)
+let ADMIN_ACTIVE_CONVO = null;
+let ADMIN_CHAT_MESSAGES = [];
+
+function loadChatSession(){
+  try{
+    const raw = localStorage.getItem('bakery_chat_session');
+    CHAT_SESSION = raw ? JSON.parse(raw) : null;
+  }catch(e){ CHAT_SESSION = null; }
+}
+function saveChatSession(){
+  try{ localStorage.setItem('bakery_chat_session', JSON.stringify(CHAT_SESSION)); }catch(e){}
+}
+async function startChatConversation(name, phone){
+  const id = uid("CV");
+  const { error } = await sb.from('chat_conversations').insert({ id, customer_name:name, phone });
+  if(error){ toast("Không thể bắt đầu trò chuyện: " + error.message); return null; }
+  CHAT_SESSION = { id, name, phone };
+  saveChatSession();
+  CHAT_MESSAGES = [];
+  return CHAT_SESSION;
+}
+async function sendChatMessage(conversationId, sender, message){
+  if(!message || !message.trim()) return;
+  const { error } = await sb.from('chat_messages').insert({ conversation_id:conversationId, sender, message:message.trim() });
+  if(error){ toast("Gửi tin nhắn thất bại: " + error.message); }
+}
+async function fetchMyChatMessages(){
+  if(!CHAT_SESSION) return [];
+  const { data, error } = await sb.rpc('get_chat_messages', { p_conversation_id: CHAT_SESSION.id });
+  if(error){ console.error(error); return []; }
+  return data;
+}
+async function fetchAdminConversations(){
+  const { data, error } = await sb.from('chat_conversations').select('*').order('last_message_at', { ascending:false });
+  if(error){ console.error(error); return []; }
+  return data;
+}
+async function fetchAdminChatMessages(conversationId){
+  const { data, error } = await sb.from('chat_messages').select('*').eq('conversation_id', conversationId).order('created_at', { ascending:true });
+  if(error){ console.error(error); return []; }
+  return data;
+}
+async function markConversationRead(conversationId){
+  await sb.from('chat_conversations').update({ unread_admin:false }).eq('id', conversationId);
 }
