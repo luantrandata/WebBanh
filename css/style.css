@@ -302,6 +302,18 @@
 
   .badge-note{font-size:12px; background:rgba(227,164,56,.15); color:var(--gold-dark); padding:9px 12px; border-radius:9px; margin-bottom:18px;}
 
+  /* ---------- Ô ảnh: dán URL hoặc tải ảnh lên ---------- */
+  .image-upload-row{display:flex; gap:8px;}
+  .image-upload-row input[type=text]{flex:1;}
+  .upload-btn{
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer; flex:0 0 auto;
+  }
+  .image-preview-wrap{margin-top:10px;}
+  .image-preview{
+    width:84px; height:84px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block;
+  }
+  .upload-btn.uploading{opacity:.6; pointer-events:none;}
+
   /* ---------- Zalo floating chat button ---------- */
   .zalo-fab{
     position:fixed; right:20px; bottom:20px; z-index:80;
