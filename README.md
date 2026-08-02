@@ -22,7 +22,7 @@ banh-shop/
 │   ├── admin.js            giao diện quản trị
 │   └── router.js           điều hướng trang + khởi động app
 ├── supabase/schema.sql  ← chạy 1 lần trong Supabase để tạo bảng + phân quyền
-├── netlify.toml
+├── _headers              ← khai báo header bảo mật cho Cloudflare Pages
 └── README.md
 ```
 
@@ -32,8 +32,11 @@ banh-shop/
 2. Copy toàn bộ nội dung file `supabase/schema.sql`, dán vào và bấm **Run**.
    File này tạo các bảng `categories`, `products`, `orders`, `site_settings`,
    `pages`, thiết lập **Row Level Security** (khách chỉ đọc được dữ liệu công khai
-   và tạo đơn hàng; chỉ admin đã đăng nhập mới sửa được dữ liệu), và chèn sẵn
-   dữ liệu mẫu.
+   và tạo đơn hàng; chỉ admin đã đăng nhập mới sửa được dữ liệu), tạo sẵn
+   **bucket lưu ảnh** (`images`) để dùng tính năng tải ảnh lên trong trang quản
+   trị, và chèn sẵn dữ liệu mẫu.
+   > Nếu bạn đã chạy `schema.sql` từ trước (không có phần bucket `images`), chỉ
+   > cần copy và chạy riêng đoạn **STORAGE** ở cuối file để bổ sung.
 3. Tạo tài khoản admin: vào **Authentication → Users → Add user**, nhập email +
    mật khẩu của bạn (tick **Auto Confirm User**). Đây là tài khoản bạn dùng để
    đăng nhập trang `/#/admin`.
@@ -70,28 +73,24 @@ git branch -M main
 git push -u origin main
 ```
 
-## 4. Deploy lên domain riêng
+## 4. Deploy lên domain riêng — Cloudflare Pages
 
-### Cách A — Netlify
-1. Vào **netlify.com** → đăng nhập bằng GitHub.
-2. **Add new site → Import an existing project** → chọn repo vừa tạo.
-3. Build command: để trống. Publish directory: `.` (đã cấu hình sẵn trong
-   `netlify.toml`).
-4. Bấm **Deploy** — sau ~30 giây bạn có 1 link dạng `xxx.netlify.app` chạy được
-   ngay.
-5. Gắn domain riêng: **Site settings → Domain management → Add a domain** →
-   nhập domain bạn đã mua → làm theo hướng dẫn trỏ DNS (Netlify sẽ tự cấp SSL
-   miễn phí sau khi DNS trỏ đúng).
-
-### Cách B — Cloudflare Pages
-1. Vào **dash.cloudflare.com → Workers & Pages → Create → Pages → Connect to Git**.
+1. Vào **dash.cloudflare.com → Workers & Pages → Create application → Pages →
+   Connect to Git**.
 2. Chọn repo vừa tạo trên GitHub.
-3. Build command: để trống. Build output directory: `/` (thư mục gốc).
-4. Bấm **Save and Deploy**.
-5. Gắn domain riêng: nếu domain đã dùng Cloudflare DNS, vào tab **Custom domains**
-   của project → **Add domain**, chỉ 1-2 phút là có SSL tự động.
+3. Cấu hình build:
+   - **Framework preset**: None
+   - **Build command**: để trống
+   - **Build output directory**: `/` (thư mục gốc)
+4. Bấm **Save and Deploy** — sau ~30-60 giây bạn có 1 link dạng `xxx.pages.dev`
+   chạy được ngay.
+5. Gắn domain riêng: vào project vừa tạo → tab **Custom domains** → **Add
+   domain** → nhập domain của bạn.
+   - Nếu domain đã dùng Cloudflare làm DNS: tự động trỏ + cấp SSL trong 1-2 phút.
+   - Nếu domain mua ở nơi khác: cần chuyển nameserver sang Cloudflare trước
+     (Cloudflare sẽ hướng dẫn cụ thể ở bước này).
 
-Từ lúc này, mỗi khi bạn (hoặc mình) sửa code và `git push`, Netlify/Cloudflare sẽ
+Từ lúc này, mỗi khi bạn (hoặc mình) sửa code và `git push`, Cloudflare Pages sẽ
 tự động build & deploy lại — không cần thao tác thủ công.
 
 ## 5. Sử dụng
@@ -99,7 +98,9 @@ tự động build & deploy lại — không cần thao tác thủ công.
 - Trang khách hàng: `/` — danh mục, giỏ hàng, đặt hàng, tra cứu đơn, chat Zalo.
 - Trang quản trị: `/#/admin` — đăng nhập bằng email/mật khẩu đã tạo ở bước 1.3.
   - **Tổng quan**: thống kê nhanh.
-  - **Sản phẩm**: thêm/sửa/xoá sản phẩm, quản lý danh mục.
+  - **Sản phẩm**: thêm/sửa/xoá sản phẩm, quản lý danh mục. Ảnh sản phẩm có thể
+    dán URL hoặc bấm **Tải ảnh lên** để chọn ảnh từ máy (tự động lưu vào
+    Supabase Storage, tối đa 5MB/ảnh).
   - **Đơn hàng**: xem chi tiết, cập nhật trạng thái, xác nhận thanh toán chuyển khoản.
   - **Trang & Nội dung**: tạo trang mới (chính sách, giới thiệu...) bằng cách
     ghép các khối có sẵn (Tiêu đề+Văn bản, Ảnh+Văn bản, Lưới sản phẩm, FAQ,
