@@ -100,7 +100,9 @@ function startAdminChatPolling(){
     if(parts[0] !== 'admin' || (parts[1]||'dashboard') !== 'chat'){ stopAdminChatPolling(); return; }
     ADMIN_CONVERSATIONS = await fetchAdminConversations();
     if(ADMIN_ACTIVE_CONVO){ ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(ADMIN_ACTIVE_CONVO); }
-    render();
+    // Chỉ cập nhật đúng phần danh sách + tin nhắn, KHÔNG render() lại toàn trang,
+    // để không xóa nội dung admin đang gõ dở trong ô trả lời.
+    refreshAdminChatDom();
   }, 4000);
 }
 

@@ -432,18 +432,13 @@ function pageAdminChat(){
   return adminShell('chat', `
     <div class="admin-topline"><h2>Trò chuyện trực tiếp</h2></div>
     <div class="chat-admin-layout">
-      <div class="panel chat-convo-list">
-        ${list.map(c=>`
-          <button type="button" class="chat-convo-item ${active===c.id?'active':''}" onclick="openAdminConversation('${c.id}')">
-            <div class="ci-top"><span class="ci-name">${esc(c.customer_name||'Khách')}</span>${c.unread_admin?'<span class="ci-dot"></span>':''}</div>
-            <div class="ci-phone">${esc(c.phone||'')}</div>
-            <div class="ci-time">${timeAgo(c.last_message_at)}</div>
-          </button>`).join('') || `<div class="empty-state" style="padding:40px 16px;"><div class="ico">💬</div>Chưa có cuộc trò chuyện nào</div>`}
+      <div class="panel chat-convo-list" id="chat-convo-list">
+        ${convoListHtml(list, active)}
       </div>
       <div class="panel chat-thread">
         ${active ? `
           <div class="chat-panel-messages" id="admin-chat-messages">
-            ${ADMIN_CHAT_MESSAGES.map(chatBubbleAdmin).join('') || `<div style="text-align:center;color:var(--cocoa-70);font-size:13px;padding:20px 0;">Chưa có tin nhắn</div>`}
+            ${adminMessagesHtml(ADMIN_CHAT_MESSAGES)}
           </div>
           <form class="chat-panel-input" onsubmit="return submitAdminChatMessage(event);">
             <input name="message" placeholder="Nhập tin nhắn trả lời..." autocomplete="off">
@@ -453,6 +448,17 @@ function pageAdminChat(){
       </div>
     </div>
   `);
+}
+function convoListHtml(list, active){
+  return list.map(c=>`
+    <button type="button" class="chat-convo-item ${active===c.id?'active':''}" onclick="openAdminConversation('${c.id}')">
+      <div class="ci-top"><span class="ci-name">${esc(c.customer_name||'Khách')}</span>${c.unread_admin?'<span class="ci-dot"></span>':''}</div>
+      <div class="ci-phone">${esc(c.phone||'')}</div>
+      <div class="ci-time">${timeAgo(c.last_message_at)}</div>
+    </button>`).join('') || `<div class="empty-state" style="padding:40px 16px;"><div class="ico">💬</div>Chưa có cuộc trò chuyện nào</div>`;
+}
+function adminMessagesHtml(messages){
+  return messages.map(chatBubbleAdmin).join('') || `<div style="text-align:center;color:var(--cocoa-70);font-size:13px;padding:20px 0;">Chưa có tin nhắn</div>`;
 }
 function chatBubbleAdmin(m){
   const mine = m.sender === 'admin';
@@ -475,10 +481,18 @@ async function submitAdminChatMessage(e){
   f.message.value = '';
   await sendChatMessage(ADMIN_ACTIVE_CONVO, 'admin', msg);
   ADMIN_CHAT_MESSAGES = await fetchAdminChatMessages(ADMIN_ACTIVE_CONVO);
-  render();
+  refreshAdminChatDom();
   scrollAdminChatToBottom();
   return false;
 }
 function scrollAdminChatToBottom(){
   setTimeout(()=>{ const el = document.getElementById('admin-chat-messages'); if(el) el.scrollTop = el.scrollHeight; }, 50);
+}
+// Cập nhật đúng phần danh sách hội thoại + tin nhắn, KHÔNG render lại toàn trang,
+// để không xóa mất nội dung admin đang gõ dở trong ô trả lời.
+function refreshAdminChatDom(){
+  const listEl = document.getElementById('chat-convo-list');
+  if(listEl) listEl.innerHTML = convoListHtml(ADMIN_CONVERSATIONS, ADMIN_ACTIVE_CONVO);
+  const msgEl = document.getElementById('admin-chat-messages');
+  if(msgEl) msgEl.innerHTML = adminMessagesHtml(ADMIN_CHAT_MESSAGES);
 }

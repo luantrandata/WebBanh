@@ -163,11 +163,11 @@ async function submitChatMessage(e){
   if(!msg.trim()) return false;
   f.message.value = '';
   CHAT_MESSAGES.push({ sender:'customer', message:msg, created_at:new Date().toISOString() });
-  render();
+  refreshChatDom();
   scrollChatToBottom();
   await sendChatMessage(CHAT_SESSION.id, 'customer', msg);
   await refreshChatMessages();
-  render();
+  refreshChatDom();
   scrollChatToBottom();
   return false;
 }
@@ -182,12 +182,18 @@ function startChatPolling(){
     if(!chatUI.open || !CHAT_SESSION) return;
     const prevCount = CHAT_MESSAGES.length;
     await refreshChatMessages();
-    if(CHAT_MESSAGES.length !== prevCount){ render(); scrollChatToBottom(); }
+    if(CHAT_MESSAGES.length !== prevCount){ refreshChatDom(); scrollChatToBottom(); }
   }, 4000);
 }
 function stopChatPolling(){ if(chatPollTimer){ clearInterval(chatPollTimer); chatPollTimer = null; } }
 function scrollChatToBottom(){
   setTimeout(()=>{ const el = document.getElementById('chat-messages-list'); if(el) el.scrollTop = el.scrollHeight; }, 50);
+}
+// Chỉ cập nhật đúng khung tin nhắn, KHÔNG render() lại toàn trang, để không xóa
+// nội dung khách đang gõ dở trong ô nhập tin nhắn.
+function refreshChatDom(){
+  const el = document.getElementById('chat-messages-list');
+  if(el) el.innerHTML = CHAT_MESSAGES.map(chatBubble).join('') || `<div style="text-align:center; color:var(--cocoa-70); font-size:13px; padding:20px 0;">Gửi tin nhắn đầu tiên cho chúng tôi nhé!</div>`;
 }
 
 /* ---------- Thẻ sản phẩm ---------- */
