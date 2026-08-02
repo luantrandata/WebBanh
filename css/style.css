@@ -314,21 +314,68 @@
   }
   .upload-btn.uploading{opacity:.6; pointer-events:none;}
 
-  /* ---------- Zalo floating chat button ---------- */
-  .zalo-fab{
-    position:fixed; right:20px; bottom:20px; z-index:80;
-    display:flex; align-items:center; gap:9px;
-    background:#0068FF; color:#fff; border:none; border-radius:999px;
-    padding:12px 18px 12px 12px; box-shadow:0 10px 26px rgba(0,104,255,.4);
-    font-weight:700; font-size:14px; transition:.15s;
+  /* ---------- Cụm nút chat nổi (Zalo / Messenger / Chat trực tiếp) ---------- */
+  .fab-stack{
+    position:fixed; right:20px; bottom:20px; z-index:85;
+    display:flex; flex-direction:column; gap:12px; align-items:flex-end;
   }
-  .zalo-fab:hover{transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,104,255,.5);}
-  .zalo-fab .ic{width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
-  @keyframes pulseZalo{0%{box-shadow:0 0 0 0 rgba(0,104,255,.45);} 70%{box-shadow:0 0 0 14px rgba(0,104,255,0);} 100%{box-shadow:0 0 0 0 rgba(0,104,255,0);}}
-  .zalo-fab .ic{animation:pulseZalo 2.2s infinite;}
+  .chat-fab{
+    display:flex; align-items:center; gap:9px; border:none; border-radius:999px; color:#fff;
+    padding:12px 18px 12px 12px; font-weight:700; font-size:14px; cursor:pointer; transition:.15s;
+    box-shadow:0 10px 24px rgba(0,0,0,.22);
+  }
+  .chat-fab:hover{transform:translateY(-3px);}
+  .chat-fab .ic{width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .chat-fab-zalo{background:#0068FF;}
+  .chat-fab-messenger{background:linear-gradient(135deg,#00B2FF,#006AFF);}
+  .chat-fab-live{background:var(--cherry);}
+  @keyframes pulseFab{0%{box-shadow:0 0 0 0 rgba(162,59,59,.4);} 70%{box-shadow:0 0 0 14px rgba(162,59,59,0);} 100%{box-shadow:0 0 0 0 rgba(162,59,59,0);}}
+  .chat-fab-live .ic{animation:pulseFab 2.2s infinite;}
   @media(max-width:560px){
-    .zalo-fab{right:14px; bottom:14px; padding:12px; }
-    .zalo-fab .label{display:none;}
+    .fab-stack{right:14px; bottom:14px; gap:10px;}
+    .chat-fab{padding:12px;}
+    .chat-fab .label{display:none;}
+  }
+
+  /* ---------- Khung chat trực tiếp ---------- */
+  .chat-panel{
+    position:fixed; right:20px; bottom:96px; z-index:90; width:340px; max-width:90vw; height:460px; max-height:70vh;
+    background:var(--paper); border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.28);
+    display:flex; flex-direction:column; overflow:hidden; border:1px solid var(--line);
+  }
+  .chat-panel-head{
+    background:var(--cocoa); color:var(--paper); padding:14px 18px;
+    display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:14.5px; flex:0 0 auto;
+  }
+  .chat-panel-head .close-x{color:var(--paper);}
+  .chat-panel-body{padding:18px; flex:1; overflow-y:auto;}
+  .chat-panel-messages{flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:8px; background:var(--cream);}
+  .chat-bubble{max-width:78%; padding:9px 13px; border-radius:14px; font-size:13.5px; line-height:1.45; word-wrap:break-word;}
+  .chat-bubble.mine{align-self:flex-end; background:var(--cherry); color:#fff; border-bottom-right-radius:4px;}
+  .chat-bubble.theirs{align-self:flex-start; background:var(--paper); border:1px solid var(--line); border-bottom-left-radius:4px;}
+  .chat-panel-input{display:flex; border-top:1px solid var(--line); padding:10px; flex:0 0 auto;}
+  .chat-panel-input input{flex:1; border:1.5px solid var(--line); border-radius:999px; padding:9px 14px; font-size:13.5px;}
+  .chat-panel-input input:focus{outline:none; border-color:var(--gold);}
+  .chat-panel-input button{background:var(--cherry); color:#fff; border:none; width:38px; height:38px; border-radius:50%; margin-left:8px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  @media(max-width:560px){
+    .chat-panel{right:10px; bottom:82px; width:calc(100vw - 20px);}
+  }
+
+  /* ---------- Trò chuyện phía quản trị ---------- */
+  .nav-badge{background:var(--cherry); color:#fff; font-size:10.5px; font-weight:700; border-radius:999px; padding:1px 7px; margin-left:4px;}
+  .chat-admin-layout{display:grid; grid-template-columns:280px 1fr; gap:16px; align-items:start;}
+  .chat-convo-list{max-height:640px; overflow-y:auto; padding:8px;}
+  .chat-convo-item{display:block; width:100%; text-align:left; background:none; border:none; padding:12px; border-radius:10px; cursor:pointer;}
+  .chat-convo-item:hover{background:var(--cream);}
+  .chat-convo-item.active{background:rgba(227,164,56,.15);}
+  .ci-top{display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:14px;}
+  .ci-dot{width:8px; height:8px; border-radius:50%; background:var(--cherry); flex:0 0 auto;}
+  .ci-phone{font-size:12px; color:var(--cocoa-70); margin-top:2px;}
+  .ci-time{font-size:11px; color:var(--cocoa-40); margin-top:2px;}
+  .chat-thread{display:flex; flex-direction:column; min-height:520px;}
+  .chat-thread .chat-panel-messages{height:460px;}
+  @media(max-width:980px){
+    .chat-admin-layout{grid-template-columns:1fr;}
   }
 
   /* ---------- Bank transfer / QR payment panel ---------- */
