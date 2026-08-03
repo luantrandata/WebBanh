@@ -11,8 +11,13 @@ create table if not exists categories (
   id text primary key,
   name text not null,
   icon text default '🍰',
+  image text default '',
+  description text default '',
   sort_order int default 0
 );
+-- Nếu bạn đã chạy schema từ trước (thiếu 2 cột image/description), chạy thêm:
+alter table categories add column if not exists image text default '';
+alter table categories add column if not exists description text default '';
 
 -- ---------- Sản phẩm ----------
 create table if not exists products (
@@ -58,9 +63,14 @@ create table if not exists pages (
   blocks jsonb not null default '[]',
   published boolean not null default true,
   show_in_footer boolean not null default true,
+  show_in_menu boolean not null default false,
   sort_order int default 0,
   created_at timestamptz default now()
 );
+
+-- Nếu bạn chạy lại schema này trên project đã có bảng pages từ trước, dòng dưới
+-- sẽ tự thêm cột mới mà không ảnh hưởng dữ liệu hiện có.
+alter table pages add column if not exists show_in_menu boolean not null default false;
 
 -- =========================================================================
 -- ROW LEVEL SECURITY
@@ -75,34 +85,53 @@ alter table site_settings enable row level security;
 alter table pages enable row level security;
 
 -- Đọc công khai
+drop policy if exists "public read categories" on categories;
 create policy "public read categories" on categories for select using (true);
+drop policy if exists "public read products" on products;
 create policy "public read products" on products for select using (true);
+drop policy if exists "public read settings" on site_settings;
 create policy "public read settings" on site_settings for select using (true);
+drop policy if exists "public read pages" on pages;
 create policy "public read pages" on pages for select using (true);
 
 -- Khách được tạo đơn hàng, nhưng KHÔNG được đọc/sửa trực tiếp đơn hàng của người khác
+drop policy if exists "public insert orders" on orders;
 create policy "public insert orders" on orders for insert with check (true);
+drop policy if exists "admin read orders" on orders;
 create policy "admin read orders" on orders for select using (auth.role() = 'authenticated');
+drop policy if exists "admin update orders" on orders;
 create policy "admin update orders" on orders for update using (auth.role() = 'authenticated');
+drop policy if exists "admin delete orders" on orders;
 create policy "admin delete orders" on orders for delete using (auth.role() = 'authenticated');
 
 -- Cho khách tra cứu đơn hàng của CHÍNH MÌNH bằng số điện thoại (qua RPC, xem bên dưới)
 -- và báo "đã chuyển khoản" mà KHÔNG được sửa bất kỳ trường nào khác (chặn bằng function, không mở UPDATE công khai).
 
 -- Admin (đã đăng nhập) toàn quyền ghi trên tất cả các bảng
+drop policy if exists "admin write categories" on categories;
 create policy "admin write categories" on categories for insert with check (auth.role() = 'authenticated');
+drop policy if exists "admin update categories" on categories;
 create policy "admin update categories" on categories for update using (auth.role() = 'authenticated');
+drop policy if exists "admin delete categories" on categories;
 create policy "admin delete categories" on categories for delete using (auth.role() = 'authenticated');
 
+drop policy if exists "admin write products" on products;
 create policy "admin write products" on products for insert with check (auth.role() = 'authenticated');
+drop policy if exists "admin update products" on products;
 create policy "admin update products" on products for update using (auth.role() = 'authenticated');
+drop policy if exists "admin delete products" on products;
 create policy "admin delete products" on products for delete using (auth.role() = 'authenticated');
 
+drop policy if exists "admin write settings" on site_settings;
 create policy "admin write settings" on site_settings for insert with check (auth.role() = 'authenticated');
+drop policy if exists "admin update settings" on site_settings;
 create policy "admin update settings" on site_settings for update using (auth.role() = 'authenticated');
 
+drop policy if exists "admin write pages" on pages;
 create policy "admin write pages" on pages for insert with check (auth.role() = 'authenticated');
+drop policy if exists "admin update pages" on pages;
 create policy "admin update pages" on pages for update using (auth.role() = 'authenticated');
+drop policy if exists "admin delete pages" on pages;
 create policy "admin delete pages" on pages for delete using (auth.role() = 'authenticated');
 
 -- =========================================================================
@@ -213,6 +242,9 @@ insert into pages (slug, title, blocks, published, show_in_footer, sort_order) v
   true, false, 0
 ),
 (
+  '_products', 'Trang Sản phẩm', '[]', true, false, false, 0
+),
+(
   'chinh-sach-giao-hang', 'Chính sách giao hàng',
   '[{"type":"heading_text","heading":"Chính sách giao hàng","text":"Cửa hàng giao hàng trong nội thành trong vòng 2-4 giờ kể từ khi xác nhận đơn. Với đơn đặt trước (bánh sinh nhật, bánh sự kiện), vui lòng đặt trước tối thiểu 24 giờ."}]',
   true, true, 1
@@ -242,10 +274,12 @@ values ('images', 'images', true)
 on conflict (id) do nothing;
 
 -- Ai cũng xem được ảnh (bucket public), nhưng CHỈ admin đã đăng nhập mới được tải lên/xoá
+drop policy if exists "admin upload images" on storage.objects;
 create policy "admin upload images" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'images');
 
+drop policy if exists "admin delete images" on storage.objects;
 create policy "admin delete images" on storage.objects
   for delete to authenticated
   using (bucket_id = 'images');
@@ -275,19 +309,24 @@ alter table chat_conversations enable row level security;
 alter table chat_messages enable row level security;
 
 -- Khách tạo hội thoại mới (không cần đăng nhập)
+drop policy if exists "chat_public_create_conversation" on chat_conversations;
 create policy "chat_public_create_conversation" on chat_conversations
   for insert to anon, authenticated with check (true);
 -- Chỉ admin xem được danh sách/toàn bộ hội thoại
+drop policy if exists "chat_admin_read_conversations" on chat_conversations;
 create policy "chat_admin_read_conversations" on chat_conversations
   for select to authenticated using (true);
+drop policy if exists "chat_admin_update_conversations" on chat_conversations;
 create policy "chat_admin_update_conversations" on chat_conversations
   for update to authenticated using (true);
 
 -- Khách và admin đều được gửi tin nhắn (insert)
+drop policy if exists "chat_public_insert_message" on chat_messages;
 create policy "chat_public_insert_message" on chat_messages
   for insert to anon, authenticated with check (true);
 -- Chỉ admin đọc trực tiếp bảng tin nhắn; khách đọc qua hàm RPC bên dưới
 -- (giới hạn theo đúng mã hội thoại của mình, không lộ hội thoại người khác)
+drop policy if exists "chat_admin_read_messages" on chat_messages;
 create policy "chat_admin_read_messages" on chat_messages
   for select to authenticated using (true);
 
