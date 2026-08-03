@@ -3,6 +3,8 @@
    các trang tuỳ chỉnh (chính sách, giới thiệu, landing page...) trong admin.
    ========================================================================= */
 const BLOCK_TYPE_LABELS = {
+  hero: "Banner đầu trang (Hero)",
+  category_grid: "Lưới danh mục",
   heading_text: "Tiêu đề + Văn bản",
   image_text: "Ảnh + Văn bản",
   products: "Lưới sản phẩm theo danh mục",
@@ -12,6 +14,8 @@ const BLOCK_TYPE_LABELS = {
 
 function defaultBlock(type){
   switch(type){
+    case 'hero': return { type, eyebrow:'Thủ công mỗi ngày', heading:'Tiêu đề banner\ndòng thứ hai', text:'Mô tả ngắn gọn về cửa hàng của bạn...', emoji:'🎂', buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' };
+    case 'category_grid': return { type, heading:'Khám phá theo dòng bánh' };
     case 'heading_text': return { type, heading:'Tiêu đề mới', text:'Nội dung của bạn...' };
     case 'image_text': return { type, heading:'Tiêu đề', text:'Nội dung của bạn...', image:'', reverse:false };
     case 'products': return { type, heading:'Sản phẩm nổi bật', category:'all' };
@@ -27,6 +31,40 @@ function renderBlocks(blocks){
 }
 const BANNER_BG = { cocoa:'var(--cocoa)', gold:'var(--gold)', cherry:'var(--cherry)', sage:'var(--sage)' };
 function renderOneBlock(b){
+  if(b.type === 'hero'){
+    return `
+    <section class="hero">
+      <div class="container">
+        <div>
+          ${b.eyebrow ? `<span class="hero-eyebrow">${esc(b.eyebrow)}</span>` : ''}
+          <h1>${esc(b.heading||'').split('\n').join('<br>')}</h1>
+          <p>${esc(b.text||'')}</p>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            ${b.buttonLabel ? `<a href="${esc(b.buttonLink||'#/category/all')}" class="btn btn-gold">${esc(b.buttonLabel)}</a>` : ''}
+          </div>
+        </div>
+        <div class="hero-visual">${esc(b.emoji||'🎂')}</div>
+      </div>
+    </section>
+    <div class="scallop scallop-cream"></div>`;
+  }
+  if(b.type === 'category_grid'){
+    const cats = DB.categories;
+    return `
+    <section class="section">
+      <div class="container">
+        <div class="section-head"><div><span class="eyebrow-line">Danh mục</span><h2>${esc(b.heading||'Danh mục sản phẩm')}</h2></div></div>
+        <div class="grid grid-4">
+          ${cats.map(c=>`
+            <a href="#/category/${c.id}" class="pcard" style="align-items:center; text-align:center; padding:26px 14px;">
+              <div style="font-size:40px; margin-bottom:10px;">${c.icon}</div>
+              <div class="name" style="font-size:15px;">${esc(c.name)}</div>
+              <div style="font-size:12.5px; color:var(--cocoa-70); margin-top:4px;">${DB.products.filter(p=>p.category===c.id && p.active).length} sản phẩm</div>
+            </a>`).join('') || `<div class="empty-state">Chưa có danh mục nào.</div>`}
+        </div>
+      </div>
+    </section>`;
+  }
   if(b.type === 'heading_text'){
     return `
     <section class="section">
@@ -91,17 +129,17 @@ function renderOneBlock(b){
 }
 
 /* ---------- Trình chỉnh sửa (admin) ---------- */
-let pageEditorDraft = null; // { id, slug, title, blocks[], published, show_in_footer, sort_order, isHomeExtra? }
+let pageEditorDraft = null; // { id, slug, title, blocks[], published, show_in_footer, sort_order, isHome? }
 
 function openPageEditor(pageId){
   const p = PAGES_ALL.find(p=>p.id===pageId);
   pageEditorDraft = p ? JSON.parse(JSON.stringify(p)) : { id:null, slug:'', title:'Trang mới', blocks:[], published:true, show_in_footer:true, sort_order:(PAGES_ALL.length||0)+1 };
   render();
 }
-function openHomeExtraEditor(){
-  const p = PAGES_ALL.find(p=>p.slug==='_home_extra');
-  pageEditorDraft = p ? JSON.parse(JSON.stringify(p)) : { id:null, slug:'_home_extra', title:'Khối nội dung thêm ở trang chủ', blocks:[], published:true, show_in_footer:false, sort_order:0 };
-  pageEditorDraft.isHomeExtra = true;
+function openHomeEditor(){
+  const p = PAGES_ALL.find(p=>p.slug==='_home');
+  pageEditorDraft = p ? JSON.parse(JSON.stringify(p)) : { id:null, slug:'_home', title:'Trang chủ', blocks:defaultHomeBlocks(), published:true, show_in_footer:false, sort_order:0 };
+  pageEditorDraft.isHome = true;
   render();
 }
 function closePageEditor(){ pageEditorDraft = null; render(); }
@@ -115,7 +153,16 @@ function syncDraftFromForm(){
 
   (pageEditorDraft.blocks||[]).forEach((b,i)=>{
     const g = (suffix)=>document.getElementById(`blk-${i}-${suffix}`);
-    if(b.type==='heading_text'){
+    if(b.type==='hero'){
+      if(g('eyebrow')) b.eyebrow = g('eyebrow').value;
+      if(g('heading')) b.heading = g('heading').value;
+      if(g('text')) b.text = g('text').value;
+      if(g('emoji')) b.emoji = g('emoji').value;
+      if(g('buttonLabel')) b.buttonLabel = g('buttonLabel').value;
+      if(g('buttonLink')) b.buttonLink = g('buttonLink').value;
+    } else if(b.type==='category_grid'){
+      if(g('heading')) b.heading = g('heading').value;
+    } else if(b.type==='heading_text'){
       if(g('heading')) b.heading = g('heading').value;
       if(g('text')) b.text = g('text').value;
     } else if(b.type==='image_text'){
@@ -161,8 +208,8 @@ function removeFaqItem(i,j){ syncDraftFromForm(); pageEditorDraft.blocks[i].item
 async function savePageEditor(){
   syncDraftFromForm();
   if(!pageEditorDraft.title.trim()){ toast('Vui lòng nhập tiêu đề trang'); return; }
-  if(pageEditorDraft.isHomeExtra){
-    pageEditorDraft.slug = '_home_extra';
+  if(pageEditorDraft.isHome){
+    pageEditorDraft.slug = '_home';
     pageEditorDraft.published = true;
     pageEditorDraft.show_in_footer = false;
   } else {
@@ -252,11 +299,11 @@ function pageEditorModal(){
   <div class="modal-wrap" onclick="if(event.target===this){closePageEditor();}">
     <div class="modal wide">
       <div class="modal-head">
-        <h3>${d.isHomeExtra ? 'Khối nội dung thêm ở trang chủ' : (d.id ? 'Sửa trang' : 'Tạo trang mới')}</h3>
+        <h3>${d.isHome ? 'Sửa trang chủ' : (d.id ? 'Sửa trang' : 'Tạo trang mới')}</h3>
         <button class="close-x" onclick="closePageEditor();">×</button>
       </div>
       <div class="modal-body">
-        ${!d.isHomeExtra ? `
+        ${!d.isHome ? `
         <div class="field-row">
           <div class="field"><label>Tiêu đề trang</label><input id="page-title" value="${esc(d.title)}" placeholder="Ví dụ: Chính sách bảo hành"></div>
           <div class="field"><label>Đường dẫn (để trống sẽ tự tạo từ tiêu đề)</label><input id="page-slug" value="${esc(d.slug)}" placeholder="chinh-sach-bao-hanh"></div>
@@ -265,7 +312,7 @@ function pageEditorModal(){
           <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;"><input type="checkbox" id="page-published" ${d.published?'checked':''}> Xuất bản (hiển thị công khai)</label>
           <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;"><input type="checkbox" id="page-show-footer" ${d.show_in_footer?'checked':''}> Hiện link ở chân trang</label>
         </div>
-        ` : `<div class="badge-note">Các khối bên dưới sẽ hiển thị ở trang chủ, ngay sau phần "Sản phẩm được yêu thích".</div>`}
+        ` : `<div class="badge-note">Đây là toàn bộ nội dung trang chủ — thêm, xoá, hoặc sắp xếp lại các khối bên dưới (banner, danh mục, lưới sản phẩm, và bất kỳ khối nào khác) để thay đổi trang chủ theo ý bạn.</div>`}
 
         <div style="margin:18px 0 10px; font-weight:700; font-size:14px;">Các khối nội dung</div>
         ${d.blocks.map((b,i)=>blockEditorCard(b,i)).join('') || `<div class="empty-state" style="padding:30px;">Chưa có khối nội dung nào. Thêm khối bên dưới.</div>`}

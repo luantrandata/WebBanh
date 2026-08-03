@@ -220,54 +220,20 @@ function productCard(p){
 
 /* ---------- Trang chủ ---------- */
 function pageHome(){
-  const featured = DB.products.filter(p=>p.active).slice(0,8);
-  const cats = DB.categories;
-  const homeExtra = PAGES_ALL.find(p=>p.slug==='_home_extra');
+  const homePage = PAGES_ALL.find(p=>p.slug==='_home');
+  const blocks = (homePage && homePage.blocks && homePage.blocks.length) ? homePage.blocks : defaultHomeBlocks();
   return `
   ${siteHeader(null)}
-  <section class="hero">
-    <div class="container">
-      <div>
-        <span class="hero-eyebrow">${esc(SETTINGS.heroEyebrow)}</span>
-        <h1>${esc(SETTINGS.heroTitle).split('\n').join('<br>')}</h1>
-        <p>${esc(SETTINGS.heroDesc)}</p>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <a href="#/category/all" class="btn btn-gold">Đặt bánh ngay</a>
-          <a href="#/category/${cats[0]?.id||'all'}" class="btn btn-outline">Xem ${esc(cats[0]?.name||'sản phẩm')}</a>
-        </div>
-      </div>
-      <div class="hero-visual">${SETTINGS.heroEmoji}</div>
-    </div>
-  </section>
-  <div class="scallop scallop-cream"></div>
-
-  <section class="section">
-    <div class="container">
-      <div class="section-head"><div><span class="eyebrow-line">Danh mục</span><h2>Khám phá theo dòng bánh</h2></div></div>
-      <div class="grid grid-4">
-        ${cats.map(c=>`
-          <a href="#/category/${c.id}" class="pcard" style="align-items:center; text-align:center; padding:26px 14px;">
-            <div style="font-size:40px; margin-bottom:10px;">${c.icon}</div>
-            <div class="name" style="font-size:15px;">${esc(c.name)}</div>
-            <div style="font-size:12.5px; color:var(--cocoa-70); margin-top:4px;">${DB.products.filter(p=>p.category===c.id && p.active).length} sản phẩm</div>
-          </a>`).join('')}
-      </div>
-    </div>
-  </section>
-
-  <section class="section" style="padding-top:0;">
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow-line">Nổi bật</span><h2>Sản phẩm được yêu thích</h2></div>
-        <a href="#/category/all" class="btn btn-ghost btn-sm">Xem tất cả</a>
-      </div>
-      <div class="grid grid-4">${featured.map(productCard).join('') || `<div class="empty-state">Chưa có sản phẩm nào.</div>`}</div>
-    </div>
-  </section>
-
-  ${homeExtra ? renderBlocks(homeExtra.blocks) : ''}
+  ${renderBlocks(blocks)}
   ${siteFooter()}
   `;
+}
+function defaultHomeBlocks(){
+  return [
+    { type:'hero', eyebrow:SETTINGS.heroEyebrow, heading:SETTINGS.heroTitle, text:SETTINGS.heroDesc, emoji:SETTINGS.heroEmoji, buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' },
+    { type:'category_grid', heading:'Khám phá theo dòng bánh' },
+    { type:'products', heading:'Sản phẩm được yêu thích', category:'all' },
+  ];
 }
 
 /* ---------- Danh mục ---------- */

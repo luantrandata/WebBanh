@@ -77,17 +77,17 @@ async function loadPages(includeUnpublished){
   if(!includeUnpublished) q = q.eq('published', true);
   const {data, error} = await q;
   if(error){ console.error(error); PAGES = []; return; }
-  PAGES = (data||[]).filter(p=>p.slug !== '_home_extra');
+  PAGES = (data||[]).filter(p=>p.slug !== '_home');
 }
-function getHomeExtraPage(){ return PAGES_ALL.find(p=>p.slug==='_home_extra'); }
-let PAGES_ALL = []; // toàn bộ trang kể cả _home_extra (dùng nội bộ để hiển thị khối thêm ở trang chủ)
+function getHomePage(){ return PAGES_ALL.find(p=>p.slug==='_home'); }
+let PAGES_ALL = []; // toàn bộ trang kể cả _home (dùng nội bộ để hiển thị trang chủ)
 async function loadPagesAll(includeUnpublished){
   let q = sb.from('pages').select('*').order('sort_order');
   if(!includeUnpublished) q = q.eq('published', true);
   const {data, error} = await q;
   if(error){ console.error(error); PAGES_ALL = []; PAGES = []; return; }
   PAGES_ALL = data || [];
-  PAGES = PAGES_ALL.filter(p=>p.slug !== '_home_extra');
+  PAGES = PAGES_ALL.filter(p=>p.slug !== '_home');
 }
 
 async function loadPublicData(){

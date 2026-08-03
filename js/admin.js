@@ -294,16 +294,16 @@ function orderDetailModal(){
 
 /* ---------- Trang & Nội dung ---------- */
 function pageAdminPages(){
-  const list = PAGES_ALL.filter(p=>p.slug !== '_home_extra');
+  const list = PAGES_ALL.filter(p=>p.slug !== '_home_extra' && p.slug !== '_home');
   return adminShell('pages', `
     <div class="admin-topline">
       <h2>Trang &amp; Nội dung</h2>
       <div style="display:flex; gap:10px;">
-        <button class="btn btn-ghost btn-sm" onclick="openHomeExtraEditor()">Khối thêm ở trang chủ</button>
+        <button class="btn btn-sage btn-sm" onclick="openHomeEditor()">🏠 Sửa trang chủ</button>
         <button class="btn btn-cherry btn-sm" onclick="openPageEditor(null)">${svgPlus()} Tạo trang mới</button>
       </div>
     </div>
-    <p style="color:var(--cocoa-70); font-size:13.5px; margin:-10px 0 20px;">Dùng để tạo các trang như chính sách giao hàng, đổi trả, giới thiệu... hoặc thêm khối nội dung tuỳ ý (banner, FAQ, ảnh + văn bản, lưới sản phẩm) vào trang chủ.</p>
+    <p style="color:var(--cocoa-70); font-size:13.5px; margin:-10px 0 20px;">Bấm <strong>"Sửa trang chủ"</strong> để chỉnh toàn bộ trang chủ (banner, danh mục, lưới sản phẩm, và thêm/bớt/sắp xếp bất kỳ khối nào). Dùng <strong>"Tạo trang mới"</strong> để tạo các trang khác như chính sách giao hàng, đổi trả, giới thiệu... — mỗi trang cũng ghép từ các khối tuỳ ý y như trang chủ.</p>
     <div class="panel">
       <table>
         <thead><tr><th>Tiêu đề</th><th>Đường dẫn</th><th>Số khối</th><th>Trạng thái</th><th>Chân trang</th><th></th></tr></thead>
@@ -351,7 +351,8 @@ function pageAdminSettings(){
       </div>
 
       <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
-        <h3 style="margin:0 0 16px; font-size:16px;">Trang chủ — Banner</h3>
+        <h3 style="margin:0 0 6px; font-size:16px;">Trang chủ — Banner mặc định</h3>
+        <p style="font-size:13px; color:var(--cocoa-70); margin:0 0 16px;">Chỉ áp dụng cho lần đầu bạn mở "Trang & Nội dung → Sửa trang chủ". Sau khi đã lưu trang chủ ở đó, hãy chỉnh nội dung banner trực tiếp trong trình chỉnh trang chủ — các trường bên dưới sẽ không còn ảnh hưởng nữa.</p>
         <div class="field"><label>Dòng nhỏ phía trên tiêu đề</label><input name="heroEyebrow" value="${esc(s.heroEyebrow)}"></div>
         <div class="field"><label>Tiêu đề chính (xuống dòng bằng Enter)</label><textarea name="heroTitle">${esc(s.heroTitle)}</textarea></div>
         <div class="field"><label>Mô tả ngắn</label><textarea name="heroDesc">${esc(s.heroDesc)}</textarea></div>
