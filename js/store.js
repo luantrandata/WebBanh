@@ -22,6 +22,9 @@ function defaultSettings(){
     heroTitle: "Bánh ngon, làm bằng\ntất cả sự tận tâm.",
     heroDesc: "Từ bánh kem sinh nhật, bánh nướng kiểu Pháp đến kem gelato mát lạnh — mỗi chiếc bánh đều được làm thủ công từ nguyên liệu tuyển chọn.",
     heroEmoji: "🎂",
+    productsPageTitle: "Tất cả sản phẩm",
+    productsPageDesc: "",
+    productsPageImage: "",
     footerDesc: "Tiệm bánh thủ công với nguyên liệu tuyển chọn, mang đến những chiếc bánh tinh tế cho mọi khoảnh khắc quan trọng của bạn.",
     hotline: "1900 0000",
     email: "info@tenthuonghieu.vn",
@@ -274,6 +277,15 @@ async function addCategory(name, icon){
   await loadCategories();
   render();
   toast("Đã thêm danh mục");
+}
+async function updateCategory(id, data){
+  const { error } = await sb.from('categories').update({
+    name: data.name, icon: data.icon, image: data.image, description: data.description,
+  }).eq('id', id);
+  if(error){ toast("Lỗi: " + error.message); return; }
+  await loadCategories();
+  render();
+  toast("Đã cập nhật danh mục");
 }
 async function deleteCategory(id){
   const used = DB.products.some(p=>p.category===id);

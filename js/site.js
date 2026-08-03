@@ -4,6 +4,7 @@
 let ui = {
   cartOpen: false,
   productFormModal: null,
+  categoryFormModal: null,
   adminMobileNav: false,
   adminOrderDetail: null,
 };
@@ -239,13 +240,26 @@ function defaultHomeBlocks(){
 /* ---------- Danh mục ---------- */
 function pageCategory(catId){
   let list = DB.products.filter(p=>p.active);
+  const cat = catId !== 'all' ? DB.categories.find(c=>c.id===catId) : null;
   if(catId !== 'all') list = list.filter(p=>p.category===catId);
-  const title = catId === 'all' ? 'Tất cả sản phẩm' : catName(catId);
+  const title = catId === 'all' ? (SETTINGS.productsPageTitle || 'Tất cả sản phẩm') : catName(catId);
+  const bannerImage = catId === 'all' ? SETTINGS.productsPageImage : (cat && cat.image);
+  const bannerDesc = catId === 'all' ? SETTINGS.productsPageDesc : (cat && cat.description);
   return `
   ${siteHeader(catId)}
+  ${bannerImage ? `
+  <div class="category-banner" style="background-image:url('${esc(bannerImage)}');">
+    <div class="category-banner-overlay"><div class="container"><h1>${esc(title)}</h1>${bannerDesc?`<p>${esc(bannerDesc)}</p>`:''}</div></div>
+  </div>` : ''}
   <section class="section">
     <div class="container">
-      <div class="section-head"><div><span class="eyebrow-line">Danh mục sản phẩm</span><h2>${esc(title)}</h2><p>${list.length} sản phẩm</p></div></div>
+      <div class="section-head">
+        <div>
+          <span class="eyebrow-line">Danh mục sản phẩm</span>
+          <h2>${esc(title)}</h2>
+          ${bannerDesc && !bannerImage ? `<p style="max-width:560px;">${esc(bannerDesc)}</p>` : `<p>${list.length} sản phẩm</p>`}
+        </div>
+      </div>
       <div class="grid grid-4">${list.map(productCard).join('') || `<div class="empty-state"><div class="ico">🍽️</div>Chưa có sản phẩm trong danh mục này.</div>`}</div>
     </div>
   </section>

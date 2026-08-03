@@ -66,6 +66,7 @@ function adminShell(active, content){
     </main>
   </div>
   ${productFormModal()}
+  ${categoryFormModal()}
   ${orderDetailModal()}
   ${pageEditorModal()}
   `;
@@ -120,9 +121,10 @@ function pageAdminProducts(){
       <div class="toolbar">
         <strong style="margin-right:8px;">Danh mục</strong>
         <div class="cat-manage-list" style="flex:1;">
-          ${DB.categories.map(c=>`<span class="cat-tag">${c.icon} ${esc(c.name)} <button onclick="deleteCategory('${c.id}')" title="Xóa danh mục">×</button></span>`).join('')}
+          ${DB.categories.map(c=>`<span class="cat-tag" style="cursor:pointer;" onclick="ui.categoryFormModal='${c.id}'; render();">${c.icon} ${esc(c.name)} <button onclick="event.stopPropagation(); deleteCategory('${c.id}')" title="Xóa danh mục">×</button></span>`).join('')}
         </div>
       </div>
+      <p style="font-size:12px; color:var(--cocoa-70); padding:0 16px 10px; margin:0;">Bấm vào một danh mục để sửa tên, icon, ảnh banner và mô tả hiển thị ở đầu trang danh mục đó.</p>
       <div class="toolbar">
         <input id="new-cat-name" placeholder="Tên danh mục mới" style="max-width:220px;">
         <select id="new-cat-icon" style="max-width:90px;">${EMOJI_CHOICES.map(em=>`<option>${em}</option>`).join('')}</select>
@@ -208,6 +210,50 @@ async function submitProductForm(e, editId){
   };
   ui.productFormModal = null;
   await upsertProduct(data, editId);
+  return false;
+}
+
+function categoryFormModal(){
+  if(!ui.categoryFormModal) return '';
+  const c = DB.categories.find(c=>c.id===ui.categoryFormModal);
+  if(!c) return '';
+  return `
+  <div class="modal-wrap" onclick="if(event.target===this){ui.categoryFormModal=null; render();}">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Sửa danh mục</h3>
+        <button class="close-x" onclick="ui.categoryFormModal=null; render();">×</button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="return submitCategoryForm(event,'${c.id}');">
+          <div class="field"><label>Tên danh mục</label><input required id="cf-name" value="${esc(c.name)}"></div>
+          <div class="field">
+            <label>Icon danh mục (hiện ở menu và bộ lọc)</label>
+            <div class="thumb-picker">
+              ${EMOJI_CHOICES.map(em=>`<button type="button" class="emoji-opt ${c.icon===em?'checked':''}" onclick="document.getElementById('cf-icon').value='${em}'; this.parentElement.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('checked')); this.classList.add('checked');">${em}</button>`).join('')}
+            </div>
+            <input type="hidden" id="cf-icon" value="${esc(c.icon)}">
+          </div>
+          <div class="field">
+            <label>Ảnh banner danh mục (hiện ở đầu trang danh mục này)</label>
+            ${imageUploadRow('cf-image','',c.image||'')}
+          </div>
+          <div class="field"><label>Mô tả ngắn (hiện dưới tên danh mục)</label><textarea id="cf-desc" rows="3">${esc(c.description||'')}</textarea></div>
+          <button class="btn btn-cherry btn-block" type="submit">Lưu thay đổi</button>
+        </form>
+      </div>
+    </div>
+  </div>`;
+}
+async function submitCategoryForm(e, id){
+  e.preventDefault();
+  ui.categoryFormModal = null;
+  await updateCategory(id, {
+    name: document.getElementById('cf-name').value.trim(),
+    icon: document.getElementById('cf-icon').value || '🍰',
+    image: document.getElementById('cf-image').value.trim(),
+    description: document.getElementById('cf-desc').value.trim(),
+  });
   return false;
 }
 
@@ -360,6 +406,17 @@ function pageAdminSettings(){
       </div>
 
       <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
+        <h3 style="margin:0 0 6px; font-size:16px;">Trang "Sản phẩm" (Tất cả sản phẩm)</h3>
+        <p style="font-size:13px; color:var(--cocoa-70); margin:0 0 16px;">Banner hiển thị ở đầu trang khi khách bấm "Sản phẩm" hoặc "Tất cả sản phẩm". Muốn chỉnh banner riêng cho từng danh mục cụ thể (Bánh kem, Bánh nướng...), vào Quản lý sản phẩm → bấm vào danh mục đó.</p>
+        <div class="field"><label>Tiêu đề trang</label><input name="productsPageTitle" value="${esc(s.productsPageTitle||'')}" placeholder="Tất cả sản phẩm"></div>
+        <div class="field"><label>Mô tả ngắn</label><textarea name="productsPageDesc" rows="2">${esc(s.productsPageDesc||'')}</textarea></div>
+        <div class="field">
+          <label>Ảnh banner (để trống nếu không muốn hiện banner)</label>
+          ${imageUploadRow('set-productsPageImage','productsPageImage',s.productsPageImage||'')}
+        </div>
+      </div>
+
+      <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
         <h3 style="margin:0 0 16px; font-size:16px;">Liên hệ &amp; chân trang</h3>
         <div class="field"><label>Mô tả ngắn ở chân trang</label><textarea name="footerDesc">${esc(s.footerDesc)}</textarea></div>
         <div class="field-row">
@@ -410,6 +467,9 @@ async function submitSettingsForm(e){
     heroTitle: f.heroTitle.value,
     heroDesc: f.heroDesc.value.trim(),
     heroEmoji: f.heroEmoji.value.trim() || '🎂',
+    productsPageTitle: f.productsPageTitle.value.trim(),
+    productsPageDesc: f.productsPageDesc.value.trim(),
+    productsPageImage: f.productsPageImage.value.trim(),
     footerDesc: f.footerDesc.value.trim(),
     hotline: f.hotline.value.trim(),
     email: f.email.value.trim(),
