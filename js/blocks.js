@@ -14,7 +14,7 @@ const BLOCK_TYPE_LABELS = {
 
 function defaultBlock(type){
   switch(type){
-    case 'hero': return { type, eyebrow:'Thủ công mỗi ngày', heading:'Tiêu đề banner\ndòng thứ hai', text:'Mô tả ngắn gọn về cửa hàng của bạn...', emoji:'🎂', buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' };
+    case 'hero': return { type, eyebrow:'Thủ công mỗi ngày', heading:'Tiêu đề banner\ndòng thứ hai', text:'Mô tả ngắn gọn về cửa hàng của bạn...', image:'🎂', buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' };
     case 'category_grid': return { type, heading:'Khám phá theo dòng bánh' };
     case 'heading_text': return { type, heading:'Tiêu đề mới', text:'Nội dung của bạn...' };
     case 'image_text': return { type, heading:'Tiêu đề', text:'Nội dung của bạn...', image:'', reverse:false };
@@ -26,6 +26,11 @@ function defaultBlock(type){
 }
 
 /* ---------- Hiển thị công khai ---------- */
+function heroVisualContent(b){
+  const val = (b.image || b.emoji || '🎂').trim();
+  if(val.startsWith('http')) return `<img src="${esc(val)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:28px;">`;
+  return esc(val);
+}
 function renderBlocks(blocks){
   return (blocks||[]).map(renderOneBlock).join('');
 }
@@ -43,7 +48,7 @@ function renderOneBlock(b){
             ${b.buttonLabel ? `<a href="${esc(b.buttonLink||'#/category/all')}" class="btn btn-gold">${esc(b.buttonLabel)}</a>` : ''}
           </div>
         </div>
-        <div class="hero-visual">${esc(b.emoji||'🎂')}</div>
+        <div class="hero-visual">${heroVisualContent(b)}</div>
       </div>
     </section>
     <div class="scallop scallop-cream"></div>`;
@@ -157,7 +162,7 @@ function syncDraftFromForm(){
       if(g('eyebrow')) b.eyebrow = g('eyebrow').value;
       if(g('heading')) b.heading = g('heading').value;
       if(g('text')) b.text = g('text').value;
-      if(g('emoji')) b.emoji = g('emoji').value;
+      if(g('image')) b.image = g('image').value;
       if(g('buttonLabel')) b.buttonLabel = g('buttonLabel').value;
       if(g('buttonLink')) b.buttonLink = g('buttonLink').value;
     } else if(b.type==='category_grid'){
@@ -230,7 +235,26 @@ async function savePageEditor(){
 function blockEditorCard(b, i){
   const total = pageEditorDraft.blocks.length;
   let fields = '';
-  if(b.type === 'heading_text'){
+  if(b.type === 'hero'){
+    fields = `
+      <div class="field"><label>Dòng nhỏ phía trên tiêu đề</label><input id="blk-${i}-eyebrow" value="${esc(b.eyebrow)}"></div>
+      <div class="field"><label>Tiêu đề (xuống dòng bằng Enter)</label><textarea id="blk-${i}-heading" rows="2">${esc(b.heading)}</textarea></div>
+      <div class="field"><label>Mô tả ngắn</label><textarea id="blk-${i}-text" rows="2">${esc(b.text)}</textarea></div>
+      <div class="field">
+        <label>Ảnh hoặc icon minh hoạ</label>
+        ${imageUploadRow(`blk-${i}-image`,'',b.image)}
+        <div class="thumb-picker" style="margin-top:10px;">
+          ${EMOJI_CHOICES.map(em=>`<button type="button" class="emoji-opt ${b.image===em?'checked':''}" onclick="document.getElementById('blk-${i}-image').value='${em}'; document.getElementById('blk-${i}-image-preview-wrap').innerHTML=''; this.parentElement.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('checked')); this.classList.add('checked');">${em}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Chữ trên nút</label><input id="blk-${i}-buttonLabel" value="${esc(b.buttonLabel)}"></div>
+        <div class="field"><label>Đường dẫn nút (VD: #/category/all)</label><input id="blk-${i}-buttonLink" value="${esc(b.buttonLink)}"></div>
+      </div>`;
+  } else if(b.type === 'category_grid'){
+    fields = `<div class="field"><label>Tiêu đề khối</label><input id="blk-${i}-heading" value="${esc(b.heading)}"></div>
+      <p style="font-size:12.5px; color:var(--cocoa-70); margin:0;">Danh mục và icon hiển thị ở đây được lấy từ mục Quản lý sản phẩm → Danh mục — sửa icon từng danh mục ở đó.</p>`;
+  } else if(b.type === 'heading_text'){
     fields = `
       <div class="field"><label>Tiêu đề</label><input id="blk-${i}-heading" value="${esc(b.heading)}"></div>
       <div class="field"><label>Nội dung</label><textarea id="blk-${i}-text" rows="4">${esc(b.text)}</textarea></div>`;

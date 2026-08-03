@@ -230,7 +230,7 @@ function pageHome(){
 }
 function defaultHomeBlocks(){
   return [
-    { type:'hero', eyebrow:SETTINGS.heroEyebrow, heading:SETTINGS.heroTitle, text:SETTINGS.heroDesc, emoji:SETTINGS.heroEmoji, buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' },
+    { type:'hero', eyebrow:SETTINGS.heroEyebrow, heading:SETTINGS.heroTitle, text:SETTINGS.heroDesc, image:SETTINGS.heroEmoji, buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' },
     { type:'category_grid', heading:'Khám phá theo dòng bánh' },
     { type:'products', heading:'Sản phẩm được yêu thích', category:'all' },
   ];
