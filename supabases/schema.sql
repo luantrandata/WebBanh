@@ -204,7 +204,13 @@ insert into site_settings (id, data) values (1, '{
 
 insert into pages (slug, title, blocks, published, show_in_footer, sort_order) values
 (
-  '_home_extra', 'Khối nội dung thêm ở trang chủ', '[]', true, false, 0
+  '_home', 'Trang chủ',
+  '[
+    {"type":"hero","eyebrow":"Thủ công mỗi ngày","heading":"Bánh ngon, làm bằng\ntất cả sự tận tâm.","text":"Từ bánh kem sinh nhật, bánh nướng kiểu Pháp đến kem gelato mát lạnh — mỗi chiếc bánh đều được làm thủ công từ nguyên liệu tuyển chọn.","emoji":"🎂","buttonLabel":"Đặt bánh ngay","buttonLink":"#/category/all"},
+    {"type":"category_grid","heading":"Khám phá theo dòng bánh"},
+    {"type":"products","heading":"Sản phẩm được yêu thích","category":"all"}
+  ]',
+  true, false, 0
 ),
 (
   'chinh-sach-giao-hang', 'Chính sách giao hàng',
@@ -222,6 +228,10 @@ insert into pages (slug, title, blocks, published, show_in_footer, sort_order) v
   true, true, 3
 )
 on conflict (slug) do nothing;
+
+-- Nếu bạn đã chạy schema từ trước và có sẵn dòng '_home_extra' cũ (không còn dùng
+-- nữa vì trang chủ giờ chỉnh sửa toàn bộ qua trang '_home'), xoá dòng thừa này đi:
+delete from pages where slug = '_home_extra' and (blocks is null or blocks = '[]'::jsonb);
 
 -- =========================================================================
 -- STORAGE — bucket lưu ảnh tải lên (sản phẩm, logo, trang tuỳ chỉnh)
