@@ -206,7 +206,7 @@ insert into pages (slug, title, blocks, published, show_in_footer, sort_order) v
 (
   '_home', 'Trang chủ',
   '[
-    {"type":"hero","eyebrow":"Thủ công mỗi ngày","heading":"Bánh ngon, làm bằng\ntất cả sự tận tâm.","text":"Từ bánh kem sinh nhật, bánh nướng kiểu Pháp đến kem gelato mát lạnh — mỗi chiếc bánh đều được làm thủ công từ nguyên liệu tuyển chọn.","emoji":"🎂","buttonLabel":"Đặt bánh ngay","buttonLink":"#/category/all"},
+    {"type":"hero","eyebrow":"Thủ công mỗi ngày","heading":"Bánh ngon, làm bằng\ntất cả sự tận tâm.","text":"Từ bánh kem sinh nhật, bánh nướng kiểu Pháp đến kem gelato mát lạnh — mỗi chiếc bánh đều được làm thủ công từ nguyên liệu tuyển chọn.","image":"🎂","buttonLabel":"Đặt bánh ngay","buttonLink":"#/category/all"},
     {"type":"category_grid","heading":"Khám phá theo dòng bánh"},
     {"type":"products","heading":"Sản phẩm được yêu thích","category":"all"}
   ]',
