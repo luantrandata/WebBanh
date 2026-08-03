@@ -31,12 +31,13 @@ banh-shop/
 1. Vào project Supabase của bạn → **SQL Editor** → **New query**.
 2. Copy toàn bộ nội dung file `supabase/schema.sql`, dán vào và bấm **Run**.
    File này tạo các bảng `categories`, `products`, `orders`, `site_settings`,
-   `pages`, thiết lập **Row Level Security** (khách chỉ đọc được dữ liệu công khai
-   và tạo đơn hàng; chỉ admin đã đăng nhập mới sửa được dữ liệu), tạo sẵn
-   **bucket lưu ảnh** (`images`) để dùng tính năng tải ảnh lên trong trang quản
-   trị, và chèn sẵn dữ liệu mẫu.
-   > Nếu bạn đã chạy `schema.sql` từ trước (không có phần bucket `images`), chỉ
-   > cần copy và chạy riêng đoạn **STORAGE** ở cuối file để bổ sung.
+   `pages`, `chat_conversations`, `chat_messages`, thiết lập **Row Level
+   Security** (khách chỉ đọc được dữ liệu công khai, tạo đơn hàng và trò
+   chuyện; chỉ admin đã đăng nhập mới sửa được dữ liệu), tạo sẵn **bucket lưu
+   ảnh** (`images`), và chèn sẵn dữ liệu mẫu. File này **chạy lại toàn bộ bao
+   nhiêu lần cũng an toàn** — mỗi khi có bản cập nhật, chỉ cần copy toàn bộ nội
+   dung file mới nhất, dán đè vào SQL Editor và bấm **Run**, không cần tìm xem
+   đoạn nào là đoạn mới.
 3. Tạo tài khoản admin: vào **Authentication → Users → Add user**, nhập email +
    mật khẩu của bạn (tick **Auto Confirm User**). Đây là tài khoản bạn dùng để
    đăng nhập trang `/#/admin`.
@@ -95,13 +96,22 @@ tự động build & deploy lại — không cần thao tác thủ công.
 
 ## 5. Sử dụng
 
-- Trang khách hàng: `/` — danh mục, giỏ hàng, đặt hàng, tra cứu đơn, chat Zalo.
+- Trang khách hàng: `/` — danh mục, giỏ hàng, đặt hàng, tra cứu đơn, và cụm nút
+  chat góc phải màn hình:
+  - **Chat trực tiếp trên web** — luôn hiện sẵn, không cần cấu hình. Khách nhập
+    tên + SĐT rồi nhắn tin ngay trong trang, không cần rời sang app khác.
+  - **Zalo** và **Facebook Messenger** — chỉ hiện khi bạn đã điền link trong
+    Cài đặt Website; bấm vào sẽ mở app/trang chat tương ứng.
 - Trang quản trị: `/#/admin` — đăng nhập bằng email/mật khẩu đã tạo ở bước 1.3.
   - **Tổng quan**: thống kê nhanh.
   - **Sản phẩm**: thêm/sửa/xoá sản phẩm, quản lý danh mục. Ảnh sản phẩm có thể
     dán URL hoặc bấm **Tải ảnh lên** để chọn ảnh từ máy (tự động lưu vào
-    Supabase Storage, tối đa 5MB/ảnh).
+    Supabase Storage, tối đa 5MB/ảnh). Bấm vào một danh mục để sửa tên, icon,
+    **ảnh banner** và mô tả — hiển thị ở đầu trang danh mục đó khi khách xem.
   - **Đơn hàng**: xem chi tiết, cập nhật trạng thái, xác nhận thanh toán chuyển khoản.
+  - **Trò chuyện**: xem và trả lời tất cả cuộc chat khách đang nhắn trên web,
+    có chấm đỏ báo số hội thoại chưa đọc. Tin nhắn cập nhật tự động mỗi ~4 giây
+    (không cần bấm tải lại).
   - **Trang & Nội dung**: tạo trang mới (chính sách, giới thiệu...) bằng cách
     ghép các khối có sẵn (Tiêu đề+Văn bản, Ảnh+Văn bản, Lưới sản phẩm, FAQ,
     Banner kêu gọi hành động); và chỉnh khối nội dung thêm hiển thị ngay ở
