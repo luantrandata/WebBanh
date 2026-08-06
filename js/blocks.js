@@ -96,7 +96,8 @@ function renderOneBlock(b){
     </section>`;
   }
   if(b.type === 'products'){
-    const list = DB.products.filter(p=>p.active && (!b.category || b.category==='all' || p.category===b.category)).slice(0,8);
+    let list = DB.products.filter(p=>p.active && (!b.category || b.category==='all' || p.category===b.category));
+    if(b.limit) list = list.slice(0, b.limit);
     return `
     <section class="section">
       <div class="container">
@@ -147,6 +148,12 @@ function openHomeEditor(){
   pageEditorDraft.isHome = true;
   render();
 }
+function openProductsPageEditor(){
+  const p = PAGES_ALL.find(p=>p.slug==='_products');
+  pageEditorDraft = p ? JSON.parse(JSON.stringify(p)) : { id:null, slug:'_products', title:'Sản phẩm', blocks:defaultProductsPageBlocks(), published:true, show_in_footer:false, sort_order:0 };
+  pageEditorDraft.isProductsPage = true;
+  render();
+}
 function closePageEditor(){ pageEditorDraft = null; render(); }
 
 function syncDraftFromForm(){
@@ -178,6 +185,7 @@ function syncDraftFromForm(){
     } else if(b.type==='products'){
       if(g('heading')) b.heading = g('heading').value;
       if(g('category')) b.category = g('category').value;
+      if(g('limit')) b.limit = g('limit').value ? Number(g('limit').value) : null;
     } else if(b.type==='faq'){
       if(g('heading')) b.heading = g('heading').value;
       (b.items||[]).forEach((it,j)=>{
@@ -215,6 +223,10 @@ async function savePageEditor(){
   if(!pageEditorDraft.title.trim()){ toast('Vui lòng nhập tiêu đề trang'); return; }
   if(pageEditorDraft.isHome){
     pageEditorDraft.slug = '_home';
+    pageEditorDraft.published = true;
+    pageEditorDraft.show_in_footer = false;
+  } else if(pageEditorDraft.isProductsPage){
+    pageEditorDraft.slug = '_products';
     pageEditorDraft.published = true;
     pageEditorDraft.show_in_footer = false;
   } else {
@@ -274,7 +286,8 @@ function blockEditorCard(b, i){
           <option value="all" ${b.category==='all'?'selected':''}>Tất cả sản phẩm</option>
           ${DB.categories.map(c=>`<option value="${c.id}" ${b.category===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}
         </select>
-      </div>`;
+      </div>
+      <div class="field"><label>Số lượng hiển thị (để trống = hiện tất cả)</label><input type="number" min="1" id="blk-${i}-limit" value="${b.limit||''}" placeholder="Ví dụ: 8"></div>`;
   } else if(b.type === 'faq'){
     fields = `
       <div class="field"><label>Tiêu đề khối</label><input id="blk-${i}-heading" value="${esc(b.heading)}"></div>
@@ -323,11 +336,11 @@ function pageEditorModal(){
   <div class="modal-wrap" onclick="if(event.target===this){closePageEditor();}">
     <div class="modal wide">
       <div class="modal-head">
-        <h3>${d.isHome ? 'Sửa trang chủ' : (d.id ? 'Sửa trang' : 'Tạo trang mới')}</h3>
+        <h3>${d.isHome ? 'Sửa trang chủ' : (d.isProductsPage ? 'Sửa trang Sản phẩm' : (d.id ? 'Sửa trang' : 'Tạo trang mới'))}</h3>
         <button class="close-x" onclick="closePageEditor();">×</button>
       </div>
       <div class="modal-body">
-        ${!d.isHome ? `
+        ${(!d.isHome && !d.isProductsPage) ? `
         <div class="field-row">
           <div class="field"><label>Tiêu đề trang</label><input id="page-title" value="${esc(d.title)}" placeholder="Ví dụ: Chính sách bảo hành"></div>
           <div class="field"><label>Đường dẫn (để trống sẽ tự tạo từ tiêu đề)</label><input id="page-slug" value="${esc(d.slug)}" placeholder="chinh-sach-bao-hanh"></div>
@@ -336,7 +349,8 @@ function pageEditorModal(){
           <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;"><input type="checkbox" id="page-published" ${d.published?'checked':''}> Xuất bản (hiển thị công khai)</label>
           <label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;"><input type="checkbox" id="page-show-footer" ${d.show_in_footer?'checked':''}> Hiện link ở chân trang</label>
         </div>
-        ` : `<div class="badge-note">Đây là toàn bộ nội dung trang chủ — thêm, xoá, hoặc sắp xếp lại các khối bên dưới (banner, danh mục, lưới sản phẩm, và bất kỳ khối nào khác) để thay đổi trang chủ theo ý bạn.</div>`}
+        ` : d.isHome ? `<div class="badge-note">Đây là toàn bộ nội dung trang chủ — thêm, xoá, hoặc sắp xếp lại các khối bên dưới (banner, danh mục, lưới sản phẩm, và bất kỳ khối nào khác) để thay đổi trang chủ theo ý bạn.</div>`
+        : `<div class="badge-note">Đây là trang hiện ra khi khách bấm "Sản phẩm" hoặc "Tất cả sản phẩm" (không áp dụng cho từng trang danh mục riêng lẻ — sửa banner riêng của từng danh mục ở Quản lý sản phẩm). Thêm, xoá, hoặc sắp xếp lại các khối bên dưới tuỳ ý.</div>`}
 
         <div style="margin:18px 0 10px; font-weight:700; font-size:14px;">Các khối nội dung</div>
         ${d.blocks.map((b,i)=>blockEditorCard(b,i)).join('') || `<div class="empty-state" style="padding:30px;">Chưa có khối nội dung nào. Thêm khối bên dưới.</div>`}

@@ -340,16 +340,17 @@ function orderDetailModal(){
 
 /* ---------- Trang & Nội dung ---------- */
 function pageAdminPages(){
-  const list = PAGES_ALL.filter(p=>p.slug !== '_home_extra' && p.slug !== '_home');
+  const list = PAGES_ALL.filter(p=>p.slug !== '_home_extra' && p.slug !== '_home' && p.slug !== '_products');
   return adminShell('pages', `
     <div class="admin-topline">
       <h2>Trang &amp; Nội dung</h2>
-      <div style="display:flex; gap:10px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn btn-sage btn-sm" onclick="openHomeEditor()">🏠 Sửa trang chủ</button>
+        <button class="btn btn-sage btn-sm" onclick="openProductsPageEditor()">🛍️ Sửa trang Sản phẩm</button>
         <button class="btn btn-cherry btn-sm" onclick="openPageEditor(null)">${svgPlus()} Tạo trang mới</button>
       </div>
     </div>
-    <p style="color:var(--cocoa-70); font-size:13.5px; margin:-10px 0 20px;">Bấm <strong>"Sửa trang chủ"</strong> để chỉnh toàn bộ trang chủ (banner, danh mục, lưới sản phẩm, và thêm/bớt/sắp xếp bất kỳ khối nào). Dùng <strong>"Tạo trang mới"</strong> để tạo các trang khác như chính sách giao hàng, đổi trả, giới thiệu... — mỗi trang cũng ghép từ các khối tuỳ ý y như trang chủ.</p>
+    <p style="color:var(--cocoa-70); font-size:13.5px; margin:-10px 0 20px;">Bấm <strong>"Sửa trang chủ"</strong> hoặc <strong>"Sửa trang Sản phẩm"</strong> để chỉnh toàn bộ nội dung 2 trang đó (banner, danh mục, lưới sản phẩm, và thêm/bớt/sắp xếp bất kỳ khối nào). Dùng <strong>"Tạo trang mới"</strong> để tạo các trang khác như chính sách giao hàng, đổi trả, giới thiệu... — mỗi trang cũng ghép từ các khối tuỳ ý y như vậy.</p>
     <div class="panel">
       <table>
         <thead><tr><th>Tiêu đề</th><th>Đường dẫn</th><th>Số khối</th><th>Trạng thái</th><th>Chân trang</th><th></th></tr></thead>
@@ -406,14 +407,19 @@ function pageAdminSettings(){
       </div>
 
       <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
-        <h3 style="margin:0 0 6px; font-size:16px;">Trang "Sản phẩm" (Tất cả sản phẩm)</h3>
-        <p style="font-size:13px; color:var(--cocoa-70); margin:0 0 16px;">Banner hiển thị ở đầu trang khi khách bấm "Sản phẩm" hoặc "Tất cả sản phẩm". Muốn chỉnh banner riêng cho từng danh mục cụ thể (Bánh kem, Bánh nướng...), vào Quản lý sản phẩm → bấm vào danh mục đó.</p>
+        <h3 style="margin:0 0 6px; font-size:16px;">Trang "Sản phẩm" — nội dung mặc định</h3>
+        <p style="font-size:13px; color:var(--cocoa-70); margin:0 0 16px;">Chỉ áp dụng cho lần đầu bạn mở "Trang & Nội dung → Sửa trang Sản phẩm". Sau khi đã lưu trang đó, hãy chỉnh trực tiếp trong trình chỉnh trang — các trường bên dưới sẽ không còn ảnh hưởng nữa.</p>
         <div class="field"><label>Tiêu đề trang</label><input name="productsPageTitle" value="${esc(s.productsPageTitle||'')}" placeholder="Tất cả sản phẩm"></div>
         <div class="field"><label>Mô tả ngắn</label><textarea name="productsPageDesc" rows="2">${esc(s.productsPageDesc||'')}</textarea></div>
         <div class="field">
           <label>Ảnh banner (để trống nếu không muốn hiện banner)</label>
           ${imageUploadRow('set-productsPageImage','productsPageImage',s.productsPageImage||'')}
         </div>
+      </div>
+
+      <div class="panel" style="padding:22px 24px; margin-bottom:20px;">
+        <h3 style="margin:0 0 6px; font-size:16px;">Banner riêng từng danh mục</h3>
+        <p style="font-size:13px; color:var(--cocoa-70); margin:0;">Ảnh/mô tả riêng cho từng danh mục (Bánh kem, Bánh nướng...) được chỉnh ở <strong>Quản lý sản phẩm → bấm vào tên danh mục</strong>, không phải ở đây.</p>
       </div>
 
       <div class="panel" style="padding:22px 24px; margin-bottom:20px;">

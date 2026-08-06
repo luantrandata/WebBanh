@@ -233,18 +233,18 @@ function defaultHomeBlocks(){
   return [
     { type:'hero', eyebrow:SETTINGS.heroEyebrow, heading:SETTINGS.heroTitle, text:SETTINGS.heroDesc, image:SETTINGS.heroEmoji, buttonLabel:'Đặt bánh ngay', buttonLink:'#/category/all' },
     { type:'category_grid', heading:'Khám phá theo dòng bánh' },
-    { type:'products', heading:'Sản phẩm được yêu thích', category:'all' },
+    { type:'products', heading:'Sản phẩm được yêu thích', category:'all', limit:8 },
   ];
 }
 
 /* ---------- Danh mục ---------- */
 function pageCategory(catId){
-  let list = DB.products.filter(p=>p.active);
-  const cat = catId !== 'all' ? DB.categories.find(c=>c.id===catId) : null;
-  if(catId !== 'all') list = list.filter(p=>p.category===catId);
-  const title = catId === 'all' ? (SETTINGS.productsPageTitle || 'Tất cả sản phẩm') : catName(catId);
-  const bannerImage = catId === 'all' ? SETTINGS.productsPageImage : (cat && cat.image);
-  const bannerDesc = catId === 'all' ? SETTINGS.productsPageDesc : (cat && cat.description);
+  if(catId === 'all') return pageAllProducts();
+  let list = DB.products.filter(p=>p.active && p.category===catId);
+  const cat = DB.categories.find(c=>c.id===catId);
+  const title = catName(catId);
+  const bannerImage = cat && cat.image;
+  const bannerDesc = cat && cat.description;
   return `
   ${siteHeader(catId)}
   ${bannerImage ? `
@@ -265,6 +265,22 @@ function pageCategory(catId){
   </section>
   ${siteFooter()}
   `;
+}
+/* Trang "Sản phẩm" / "Tất cả sản phẩm" — ghép từ các khối, chỉnh được y hệt trang chủ */
+function pageAllProducts(){
+  const productsPage = PAGES_ALL.find(p=>p.slug==='_products');
+  const blocks = (productsPage && productsPage.blocks && productsPage.blocks.length) ? productsPage.blocks : defaultProductsPageBlocks();
+  return `
+  ${siteHeader('all')}
+  ${renderBlocks(blocks)}
+  ${siteFooter()}
+  `;
+}
+function defaultProductsPageBlocks(){
+  return [
+    { type:'heading_text', heading: SETTINGS.productsPageTitle || 'Tất cả sản phẩm', text: SETTINGS.productsPageDesc || '' },
+    { type:'products', heading:'', category:'all', limit:null },
+  ];
 }
 
 /* ---------- Chi tiết sản phẩm ---------- */
