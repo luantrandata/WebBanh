@@ -12,7 +12,7 @@ let route = "#/";
 
 /* ---------- Header / Footer ---------- */
 function siteHeader(activeCat){
-  const catChips = DB.categories.map(c => `<a href="#/category/${c.id}" class="catchip ${activeCat===c.id?'active':''}">${c.icon} ${esc(c.name)}</a>`).join('');
+  const catChips = DB.categories.map(c => `<a href="#/category/${c.id}" class="catchip ${activeCat===c.id?'active':''}"><span class="catchip-thumb">${catThumbHtml(c)}</span> ${esc(c.name)}</a>`).join('');
   return `
   <header class="site">
     <div class="container">

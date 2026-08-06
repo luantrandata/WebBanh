@@ -118,13 +118,24 @@ function pageAdminProducts(){
     </div>
 
     <div class="panel" style="margin-bottom:22px;">
-      <div class="toolbar">
-        <strong style="margin-right:8px;">Danh mục</strong>
-        <div class="cat-manage-list" style="flex:1;">
-          ${DB.categories.map(c=>`<span class="cat-tag" style="cursor:pointer;" onclick="ui.categoryFormModal='${c.id}'; render();">${c.icon} ${esc(c.name)} <button onclick="event.stopPropagation(); deleteCategory('${c.id}')" title="Xóa danh mục">×</button></span>`).join('')}
-        </div>
-      </div>
-      <p style="font-size:12px; color:var(--cocoa-70); padding:0 16px 10px; margin:0;">Bấm vào một danh mục để sửa tên, icon, ảnh banner và mô tả hiển thị ở đầu trang danh mục đó.</p>
+      <div class="toolbar"><strong>Danh mục</strong></div>
+      <table>
+        <thead><tr><th></th><th>Tên danh mục</th><th>Mô tả</th><th>Số sản phẩm</th><th></th></tr></thead>
+        <tbody>
+          ${DB.categories.map(c=>`
+            <tr style="cursor:pointer;" onclick="ui.categoryFormModal='${c.id}'; render();">
+              <td><div class="row-thumb">${catThumbHtml(c)}</div></td>
+              <td style="font-weight:600;">${esc(c.name)}</td>
+              <td style="color:var(--cocoa-70); font-size:12.5px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(c.description||'')}</td>
+              <td>${DB.products.filter(p=>p.category===c.id).length}</td>
+              <td>
+                <button class="icon-action" onclick="event.stopPropagation(); ui.categoryFormModal='${c.id}'; render();">${svgEdit()}</button>
+                <button class="icon-action danger" onclick="event.stopPropagation(); deleteCategory('${c.id}')">${svgTrash()}</button>
+              </td>
+            </tr>`).join('') || `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--cocoa-70);">Chưa có danh mục nào</td></tr>`}
+        </tbody>
+      </table>
+      <p style="font-size:12px; color:var(--cocoa-70); padding:12px 16px 4px; margin:0;">Bấm vào một danh mục để sửa tên, ảnh, icon và mô tả hiển thị ở đầu trang danh mục đó.</p>
       <div class="toolbar">
         <input id="new-cat-name" placeholder="Tên danh mục mới" style="max-width:220px;">
         <select id="new-cat-icon" style="max-width:90px;">${EMOJI_CHOICES.map(em=>`<option>${em}</option>`).join('')}</select>

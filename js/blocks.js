@@ -62,7 +62,7 @@ function renderOneBlock(b){
         <div class="grid grid-4">
           ${cats.map(c=>`
             <a href="#/category/${c.id}" class="pcard" style="align-items:center; text-align:center; padding:26px 14px;">
-              <div style="font-size:40px; margin-bottom:10px;">${c.icon}</div>
+              <div class="cat-grid-thumb">${catThumbHtml(c)}</div>
               <div class="name" style="font-size:15px;">${esc(c.name)}</div>
               <div style="font-size:12.5px; color:var(--cocoa-70); margin-top:4px;">${DB.products.filter(p=>p.category===c.id && p.active).length} sản phẩm</div>
             </a>`).join('') || `<div class="empty-state">Chưa có danh mục nào.</div>`}

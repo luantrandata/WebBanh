@@ -22,6 +22,11 @@ function thumbHtml(image){
   if(image && image.startsWith('http')) return `<img src="${esc(image)}" alt="">`;
   return image || '🍰';
 }
+// Danh mục: ưu tiên hiển thị ẢNH đã tải lên, nếu chưa có ảnh thì mới dùng icon emoji
+function catThumbHtml(c){
+  if(c && c.image && c.image.startsWith('http')) return `<img src="${esc(c.image)}" alt="">`;
+  return (c && c.icon) || '🍰';
+}
 
 let toastTimer = null;
 function toast(msg){
